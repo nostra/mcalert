@@ -15,7 +15,7 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.6.7</quarkus.platform.version>
         <skipITs>true</skipITs>
-        <surefire-plugin.version>3.1.2</surefire-plugin.version>
+        <surefire-plugin.version>3.2.5</surefire-plugin.version>
         <javafx-controls.version>21.0.2</javafx-controls.version>
         <controlsfx.version>11.2.0</controlsfx.version>
     </properties>
