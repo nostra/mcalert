@@ -37,30 +37,39 @@ public class TrayCreator extends Application {
     }
 
     private void addAppToTray() {
+        trayIcon = new TrayIcon(okImage);
+        trayIcon.setImageAutoSize(true);
+        trayIcon.addActionListener(event -> Platform.runLater(()->{logger.info("Action listener triggered");}));
+        trayIcon.addActionListener(event -> Platform.runLater(this::refresh));
+
+        trayIcon.setPopupMenu(constructTrayMenu());
+        SystemTray tray = SystemTray.getSystemTray();
         try {
-            SystemTray tray = SystemTray.getSystemTray();
-            trayIcon = new TrayIcon(okImage);
-            trayIcon.setImageAutoSize(true);
-            trayIcon.addActionListener(event -> Platform.runLater(this::refresh));
-
-            MenuItem refreshItem = new MenuItem("refresh");
-            refreshItem.addActionListener(e -> refresh());
-
-            MenuItem exitItem = new MenuItem("exit");
-            exitItem.addActionListener(e -> {
-                logger.info("Exit chosen, platform exit");
-                Quarkus.asyncExit();
-                Platform.exit();
-            });
-
-            PopupMenu popup = new PopupMenu();
-            popup.add(refreshItem);
-            popup.add(exitItem);
-            trayIcon.setPopupMenu(popup);
             tray.add(trayIcon);
         } catch (Exception e) {
             logger.error("Trouble setting up....", e);
         }
+    }
+
+    private PopupMenu constructTrayMenu() {
+        MenuItem refreshItem = new MenuItem("refresh");
+        refreshItem.addActionListener(e -> {
+            logger.debug("Menuitem triggered, refreshing");
+            refresh();
+        });
+        MenuItem exitItem = new MenuItem("exit");
+        exitItem.addActionListener(e -> {
+            logger.info("Exit chosen, platform exit");
+            Quarkus.asyncExit();
+            Platform.exit();
+        });
+
+        PopupMenu popup = new PopupMenu();
+        popup.add(refreshItem);
+        popup.add(exitItem);
+
+        refreshItem.addActionListener(e -> logger.info("Some action on refreshItem"));
+        return popup;
     }
 
     private void refresh() {

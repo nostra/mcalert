@@ -11,6 +11,12 @@ quarkus extension add picocli
 
 JavaFX libraries added manually.
 
+## Run with
+
+```shell
+java -jar target/quarkus-app/quarkus-run.jar 
+```
+
 ## Default doc from quarkus below
 
 

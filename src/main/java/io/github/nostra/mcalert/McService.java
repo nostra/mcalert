@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 @Dependent
 public class McService {
-    private Logger log = LoggerFactory.getLogger(McService.class);
+    private final Logger log = LoggerFactory.getLogger(McService.class);
     void execute() {
         log.info("Executing McService");
         TrayCreator.boot();

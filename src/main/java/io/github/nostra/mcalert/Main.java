@@ -39,5 +39,4 @@ public class Main implements QuarkusApplication, Runnable {
         }
         mcService.execute();
     }
-
 }
