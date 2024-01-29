@@ -7,9 +7,17 @@ quarkus create app io.github.nostra:mcalert --java=21 --no-code
 ```
 ```shell
 quarkus extension add picocli
+quarkus extension add resteasy-reactive-jackson
+quarkus extension add rest-client-reactive-jackson
 ```
 
-JavaFX libraries added manually.
+## Await javafx
+
+A challenge is to wire up the JavaFX frameworks. This
+will be addressed shortly: https://github.com/quarkiverse/quarkus-fx/
+In the mean time, I just skip the JavaFX part.
+
+(JavaFX libraries added manually.)
 
 ## Run with
 

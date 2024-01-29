@@ -1,46 +1,65 @@
 package io.github.nostra.mcalert.tray;
 
+import io.github.nostra.mcalert.exception.McException;
 import io.quarkus.runtime.Quarkus;
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.stage.Stage;
+import io.quarkus.runtime.Shutdown;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.Semaphore;
 
-public class TrayCreator extends Application {
+@Singleton
+public class TrayCreator  {
     private static final Logger logger = LoggerFactory.getLogger(TrayCreator.class);
-    private Stage stage;
     private TrayIcon trayIcon ;
     private Image okImage;
     private Image failureImage;
+    private Semaphore mutex = new Semaphore(1);
 
-    public static void boot() {
-        launch();
+    /*
+    private final AlertService alertService;
+
+    @Inject
+    public TrayCreator(@RestClient AlertService alertService) {
+        this.alertService = alertService;
     }
+*/
+    public Semaphore start() {
+        logger.info("Starting GUI...");
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        logger.info("Starting javafx...");
-        this.stage = stage;
-        // instructs the javafx system not to exit implicitly when the last application window is shut.
-        Platform.setImplicitExit(false);
-        okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/arrow-up-circle-fill.png")));
-        failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/arrow-down-double-line.png")));
+        try {
+            mutex.acquire();
+            logger.info("...locked");
+            okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/arrow-up-circle-fill.png")));
+            failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/arrow-down-double-line.png")));
+        } catch (IOException e) {
+            throw new McException("Could not initialize", e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         // sets up the tray icon (using awt code run on the swing thread).
         SwingUtilities.invokeLater(this::addAppToTray);
+        return mutex;
     }
+
+    @Shutdown
+    void shutdown() {
+        logger.info("Shutdown-hook triggering (TrayCreator)");
+    }
+
 
     private void addAppToTray() {
         trayIcon = new TrayIcon(okImage);
         trayIcon.setImageAutoSize(true);
-        trayIcon.addActionListener(event -> Platform.runLater(()->{logger.info("Action listener triggered");}));
-        trayIcon.addActionListener(event -> Platform.runLater(this::refresh));
+        trayIcon.addActionListener(event -> SwingUtilities.invokeLater(()-> logger.info("Action listener triggered")));
+        trayIcon.addActionListener(event -> SwingUtilities.invokeLater(this::refresh));
 
         trayIcon.setPopupMenu(constructTrayMenu());
         SystemTray tray = SystemTray.getSystemTray();
@@ -60,8 +79,8 @@ public class TrayCreator extends Application {
         MenuItem exitItem = new MenuItem("exit");
         exitItem.addActionListener(e -> {
             logger.info("Exit chosen, platform exit");
+            mutex.release();
             Quarkus.asyncExit();
-            Platform.exit();
         });
 
         PopupMenu popup = new PopupMenu();
@@ -73,6 +92,7 @@ public class TrayCreator extends Application {
     }
 
     private void refresh() {
+        //logger.info("Call to alert service gave " + alertService.getResult());
         final var imageToSet =
             trayIcon.getImage() == okImage
             ? failureImage

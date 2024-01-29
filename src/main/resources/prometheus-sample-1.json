@@ -1,0 +1,196 @@
+{
+  "status": "success",
+  "data": {
+    "alerts": [
+      {
+        "labels": {
+          "alertname": "KubeSchedulerDown",
+          "severity": "critical"
+        },
+        "annotations": {
+          "description": "KubeScheduler has disappeared from Prometheus target discovery.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeschedulerdown",
+          "summary": "Target disappeared from Prometheus target discovery."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-26T07:16:27.844106554Z",
+        "value": "1e+00"
+      },
+      {
+        "labels": {
+          "alertname": "NodeClockNotSynchronising",
+          "container": "kube-rbac-proxy",
+          "endpoint": "https",
+          "instance": "kind-control-plane",
+          "job": "node-exporter",
+          "namespace": "monitoring",
+          "pod": "node-exporter-q9jzh",
+          "service": "node-exporter",
+          "severity": "warning"
+        },
+        "annotations": {
+          "description": "Clock at kind-control-plane is not synchronising. Ensure NTP is configured on this host.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/node/nodeclocknotsynchronising",
+          "summary": "Clock not synchronising."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-29T06:21:09.236847853Z",
+        "value": "0e+00"
+      },
+      {
+        "labels": {
+          "alertname": "NodeClockNotSynchronising",
+          "container": "kube-rbac-proxy",
+          "endpoint": "https",
+          "instance": "kind-worker",
+          "job": "node-exporter",
+          "namespace": "monitoring",
+          "pod": "node-exporter-fnlc2",
+          "service": "node-exporter",
+          "severity": "warning"
+        },
+        "annotations": {
+          "description": "Clock at kind-worker is not synchronising. Ensure NTP is configured on this host.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/node/nodeclocknotsynchronising",
+          "summary": "Clock not synchronising."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-29T06:21:09.236847853Z",
+        "value": "0e+00"
+      },
+      {
+        "labels": {
+          "alertname": "CPUThrottlingHigh",
+          "container": "config-reloader",
+          "namespace": "monitoring",
+          "pod": "alertmanager-main-0",
+          "severity": "info"
+        },
+        "annotations": {
+          "description": "67.21% throttling of CPU in namespace monitoring for container config-reloader in pod alertmanager-main-0.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh",
+          "summary": "Processes experience elevated CPU throttling."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-29T06:21:33.761128778Z",
+        "value": "6.721311475409837e-01"
+      },
+      {
+        "labels": {
+          "alertname": "CPUThrottlingHigh",
+          "container": "kube-rbac-proxy-main",
+          "namespace": "monitoring",
+          "pod": "kube-state-metrics-5b4f465748-ld8jb",
+          "severity": "info"
+        },
+        "annotations": {
+          "description": "34.78% throttling of CPU in namespace monitoring for container kube-rbac-proxy-main in pod kube-state-metrics-5b4f465748-ld8jb.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh",
+          "summary": "Processes experience elevated CPU throttling."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-29T06:29:33.761128778Z",
+        "value": "3.4782608695652173e-01"
+      },
+      {
+        "labels": {
+          "alertname": "CPUThrottlingHigh",
+          "container": "config-reloader",
+          "namespace": "monitoring",
+          "pod": "alertmanager-main-2",
+          "severity": "info"
+        },
+        "annotations": {
+          "description": "42.86% throttling of CPU in namespace monitoring for container config-reloader in pod alertmanager-main-2.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh",
+          "summary": "Processes experience elevated CPU throttling."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-29T06:21:33.761128778Z",
+        "value": "4.2857142857142855e-01"
+      },
+      {
+        "labels": {
+          "alertname": "CPUThrottlingHigh",
+          "container": "config-reloader",
+          "namespace": "monitoring",
+          "pod": "prometheus-k8s-1",
+          "severity": "info"
+        },
+        "annotations": {
+          "description": "65.85% throttling of CPU in namespace monitoring for container config-reloader in pod prometheus-k8s-1.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh",
+          "summary": "Processes experience elevated CPU throttling."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-29T06:21:33.761128778Z",
+        "value": "6.585365853658536e-01"
+      },
+      {
+        "labels": {
+          "alertname": "CPUThrottlingHigh",
+          "container": "grafana",
+          "namespace": "monitoring",
+          "pod": "grafana-6f9d7d7bc-z7qb8",
+          "severity": "info"
+        },
+        "annotations": {
+          "description": "28.57% throttling of CPU in namespace monitoring for container grafana in pod grafana-6f9d7d7bc-z7qb8.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh",
+          "summary": "Processes experience elevated CPU throttling."
+        },
+        "state": "pending",
+        "activeAt": "2024-01-29T08:05:33.761128778Z",
+        "value": "2.857142857142857e-01"
+      },
+      {
+        "labels": {
+          "alertname": "CPUThrottlingHigh",
+          "container": "config-reloader",
+          "namespace": "monitoring",
+          "pod": "alertmanager-main-1",
+          "severity": "info"
+        },
+        "annotations": {
+          "description": "64.49% throttling of CPU in namespace monitoring for container config-reloader in pod alertmanager-main-1.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh",
+          "summary": "Processes experience elevated CPU throttling."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-29T06:21:33.761128778Z",
+        "value": "6.448598130841122e-01"
+      },
+      {
+        "labels": {
+          "alertname": "CPUThrottlingHigh",
+          "container": "config-reloader",
+          "namespace": "monitoring",
+          "pod": "prometheus-k8s-0",
+          "severity": "info"
+        },
+        "annotations": {
+          "description": "60.42% throttling of CPU in namespace monitoring for container config-reloader in pod prometheus-k8s-0.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh",
+          "summary": "Processes experience elevated CPU throttling."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-29T06:21:33.761128778Z",
+        "value": "6.041666666666666e-01"
+      },
+      {
+        "labels": {
+          "alertname": "KubeControllerManagerDown",
+          "severity": "critical"
+        },
+        "annotations": {
+          "description": "KubeControllerManager has disappeared from Prometheus target discovery.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecontrollermanagerdown",
+          "summary": "Target disappeared from Prometheus target discovery."
+        },
+        "state": "firing",
+        "activeAt": "2024-01-26T07:16:40.399822807Z",
+        "value": "1e+00"
+      }
+    ]
+  }
+}

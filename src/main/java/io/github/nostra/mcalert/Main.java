@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
+import java.util.concurrent.Semaphore;
+
 @QuarkusMain
 @CommandLine.Command
 public class Main implements QuarkusApplication, Runnable {
@@ -22,8 +24,8 @@ public class Main implements QuarkusApplication, Runnable {
     }
 
     @Override
-    public int run(String... args) throws Exception {
-        return new CommandLine(new Main(new McService())).execute(args);
+    public int run(String... args) {
+        return new CommandLine(new Main(mcService)).execute(args);
     }
 
     @Override
@@ -37,6 +39,15 @@ public class Main implements QuarkusApplication, Runnable {
         if (config != null) {
             mcService.loadConfig(config);
         }
-        mcService.execute();
+        Semaphore lock =  mcService.execute();
+        try {
+            logger.info("Execute done, now locking");
+            lock.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            logger.info("Continue to exit");
+            lock.release();
+        }
     }
 }
