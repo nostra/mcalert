@@ -35,27 +35,36 @@ public class TrayCreator  {
 
         try {
             mutex.acquire();
-            logger.info("...locked");
             okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/arrow-up-circle-fill.png")));
             failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/arrow-down-double-line.png")));
         } catch (IOException e) {
             throw new McException("Could not initialize", e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (InterruptedException ignore) {
+            Thread.currentThread().interrupt();
         }
 
         // sets up the tray icon (using awt code run on the swing thread).
-        SwingUtilities.invokeLater(this::addAppToTray);
+        SwingUtilities.invokeLater(this::addIconToTray);
         return mutex;
     }
 
     @Shutdown
     void shutdown() {
         logger.info("Shutdown-hook triggering (TrayCreator)");
+        SwingUtilities.invokeLater(this::removeIconFromTray);
+    }
+
+    private void removeIconFromTray() {
+        SystemTray tray = SystemTray.getSystemTray();
+        try {
+            tray.remove(trayIcon);
+        } catch (Exception e) {
+            logger.error("Trouble cleaning up....", e);
+        }
     }
 
 
-    private void addAppToTray() {
+    private void addIconToTray() {
         trayIcon = new TrayIcon(okImage);
         trayIcon.setImageAutoSize(true);
         trayIcon.addActionListener(event -> SwingUtilities.invokeLater(()-> logger.info("Action listener triggered")));

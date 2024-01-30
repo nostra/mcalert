@@ -39,15 +39,15 @@ public class Main implements QuarkusApplication, Runnable {
         if (config != null) {
             mcService.loadConfig(config);
         }
-        Semaphore lock =  mcService.execute();
+        Semaphore mutex =  mcService.execute();
         try {
-            logger.info("Execute done, now locking");
-            lock.acquire();
+            logger.info("Execute done, now block for exit");
+            mutex.acquire();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            logger.info("Continue to exit");
-            lock.release();
+            logger.info("Exiting");
+            mutex.release();
         }
     }
 }
