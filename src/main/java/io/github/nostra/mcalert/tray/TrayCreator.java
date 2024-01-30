@@ -1,9 +1,12 @@
 package io.github.nostra.mcalert.tray;
 
+import io.github.nostra.mcalert.client.AlertService;
 import io.github.nostra.mcalert.exception.McException;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.Shutdown;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,14 +25,13 @@ public class TrayCreator  {
     private Image failureImage;
     private Semaphore mutex = new Semaphore(1);
 
-    /*
     private final AlertService alertService;
 
     @Inject
     public TrayCreator(@RestClient AlertService alertService) {
         this.alertService = alertService;
     }
-*/
+
     public Semaphore start() {
         logger.info("Starting GUI...");
 
@@ -101,7 +103,7 @@ public class TrayCreator  {
     }
 
     private void refresh() {
-        //logger.info("Call to alert service gave " + alertService.getResult());
+        logger.info("Call to alert service gave " + alertService.getResult());
         final var imageToSet =
             trayIcon.getImage() == okImage
             ? failureImage

@@ -9,5 +9,5 @@ package io.github.nostra.mcalert.model;
  */
 public class PrometheusResult {
     public String status;
-    public AlertModel[] data;
+    public PrometheusData data;
 }

@@ -9,4 +9,5 @@ module io.github.nostra.mcalert {
 
     opens io.github.nostra.mcalert;
     exports io.github.nostra.mcalert;
+    exports io.github.nostra.mcalert.model;
 }
