@@ -6,6 +6,7 @@ module io.github.nostra.mcalert {
     requires info.picocli;
     requires jakarta.ws.rs;
     requires microprofile.rest.client.api;
+    requires microprofile.config.api;
 
     opens io.github.nostra.mcalert;
     exports io.github.nostra.mcalert;

@@ -18,10 +18,14 @@ import java.util.Map;
  *         "value": "1e+00"
  *       },
  */
-public class AlertModel {
-    public Map<String, String> labels;
-    public Map<String, String> annotations;
-    public String state;
-    public String activeAt;
-    public double value;
+public record AlertModel(
+    Map<String, String> labels,
+    Map<String, String> annotations,
+    String state,
+    String activeAt,
+    double value
+) {
+    public String alertName() {
+        return labels.get("alertname");
+    }
 }

@@ -7,7 +7,14 @@ package io.github.nostra.mcalert.model;
  *     "alerts": [
  *     ...
  */
-public class PrometheusResult {
-    public String status;
-    public PrometheusData data;
+public record PrometheusResult(
+        String status,
+        PrometheusData data
+) {
+    /**
+     * @return Debug string
+     */
+    public String debugOutput() {
+        return "Number of alerts read: "+data.alerts().size();
+    }
 }

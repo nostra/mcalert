@@ -23,7 +23,7 @@ public class TrayCreator  {
     private TrayIcon trayIcon ;
     private Image okImage;
     private Image failureImage;
-    private Semaphore mutex = new Semaphore(1);
+    private final Semaphore mutex = new Semaphore(1);
 
     private final AlertService alertService;
 
@@ -103,7 +103,8 @@ public class TrayCreator  {
     }
 
     private void refresh() {
-        logger.info("Call to alert service gave " + alertService.getResult());
+        var prom = alertService.getResult();
+        logger.info("Got prom with: "+prom.debugOutput());
         final var imageToSet =
             trayIcon.getImage() == okImage
             ? failureImage
