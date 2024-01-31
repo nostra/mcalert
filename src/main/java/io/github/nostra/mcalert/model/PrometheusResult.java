@@ -17,4 +17,8 @@ public record PrometheusResult(
     public String debugOutput() {
         return "Number of alerts read: "+data.alerts().size();
     }
+
+    public boolean noAlerts() {
+        return data() != null && data.alerts().isEmpty();
+    }
 }

@@ -1,7 +1,7 @@
 package io.github.nostra.mcalert;
 
 import io.github.nostra.mcalert.exception.McException;
-import io.github.nostra.mcalert.tray.TrayCreator;
+import io.github.nostra.mcalert.tray.PrometheusTray;
 import io.quarkus.runtime.Shutdown;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -15,16 +15,16 @@ public class McService {
     private final Logger log = LoggerFactory.getLogger(McService.class);
     private static final Logger logger = LoggerFactory.getLogger(McService.class);
 
-    private TrayCreator trayCreator;
+    private PrometheusTray prometheusTray;
 
     @Inject
-    public McService(TrayCreator trayCreator) {
-        this.trayCreator = trayCreator;
+    public McService(PrometheusTray prometheusTray) {
+        this.prometheusTray = prometheusTray;
     }
 
     Semaphore execute() {
         log.info("Executing McService");
-        return trayCreator.start();
+        return prometheusTray.start();
     }
 
     @Shutdown

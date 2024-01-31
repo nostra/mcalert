@@ -22,8 +22,8 @@ import java.util.Objects;
 import java.util.concurrent.Semaphore;
 
 @Singleton
-public class TrayCreator  {
-    private static final Logger logger = LoggerFactory.getLogger(TrayCreator.class);
+public class PrometheusTray {
+    private static final Logger logger = LoggerFactory.getLogger(PrometheusTray.class);
     private TrayIcon trayIcon ;
     private Image okImage;
     private Image failureImage;
@@ -36,7 +36,7 @@ public class TrayCreator  {
     private final AlertService alertService;
 
     @Inject
-    public TrayCreator(@RestClient AlertService alertService) {
+    public PrometheusTray(@RestClient AlertService alertService) {
         this.alertService = alertService;
     }
 
@@ -63,7 +63,7 @@ public class TrayCreator  {
 
     @Shutdown
     void shutdown() {
-        logger.info("Shutdown-hook triggering (TrayCreator)");
+        logger.info("Shutdown-hook triggered");
         running = true;
         SwingUtilities.invokeLater(this::removeIconFromTray);
     }
@@ -81,7 +81,7 @@ public class TrayCreator  {
     private void addIconToTray() {
         trayIcon = new TrayIcon(okImage);
         trayIcon.setImageAutoSize(true);
-        trayIcon.addActionListener(event -> SwingUtilities.invokeLater(this::refresh));
+        trayIcon.addActionListener(event -> SwingUtilities.invokeLater(this::callAndRefreshIcon));
         trayIcon.setPopupMenu(constructTrayMenu());
 
         SystemTray tray = SystemTray.getSystemTray();
@@ -96,7 +96,7 @@ public class TrayCreator  {
         MenuItem refreshItem = new MenuItem("refresh");
         refreshItem.addActionListener(e -> {
             logger.debug("Menuitem triggered, force refresh");
-            refresh();
+            callAndRefreshIcon();
         });
         MenuItem exitItem = new MenuItem("exit");
         exitItem.addActionListener(e -> {
@@ -118,18 +118,18 @@ public class TrayCreator  {
      @Scheduled( every = "${scheduledRefresh.every.expr:60s}")
      void scheduledRefresh() {
          if ( running ) {
-             refresh();
+             callAndRefreshIcon();
          }
      }
 
-     void refresh() {
+     void callAndRefreshIcon() {
         try {
             var prom = alertService.getResult();
             logger.debug("Got prom with: " + prom.debugOutput());
             final var imageToSet =
-                    trayIcon.getImage() == okImage
-                            ? failureImage
-                            : okImage;
+                    prom.status().equalsIgnoreCase("success") && prom.noAlerts()
+                            ? okImage
+                            : failureImage;
             SwingUtilities.invokeLater(() -> trayIcon.setImage(imageToSet));
         } catch (Exception e) {
             logger.info("Trouble calling prometheus. Masked exception is " + e.getMessage());

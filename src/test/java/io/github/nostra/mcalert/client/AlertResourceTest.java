@@ -41,6 +41,7 @@ class AlertResourceTest {
                         .anyMatch(alert -> alert.alertName().equals("CPUThrottlingHigh")));
 
         assertEquals(4, filtered.data().alerts().size());
+        assertFalse(filtered.noAlerts());
     }
 
     private PrometheusResult readPrometheusData() {
