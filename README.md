@@ -35,6 +35,18 @@ Icons downloaded from
 - https://remixicon.com/icon/pulse-line
 - https://remixicon.com/icon/shut-down-line
 
+## 
+
+```shell
+mvn -B clean package
+echo "Create dmg"
+cd target
+jpackage --verbose --name mcalert --input quarkus-app \
+    --description "Read Prometheus endpoint and show status as toolbar icon" \
+    --icon src/main/resources/circle-line.png \
+    --main-jar quarkus-run.jar 
+```
+--main-class io.github.nostra.mcalert.Main
 ## Default doc from quarkus below
 
 
