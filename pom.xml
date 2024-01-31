@@ -14,7 +14,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.6.7</quarkus.platform.version>
+    <quarkus.platform.version>3.6.8</quarkus.platform.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
   </properties>
@@ -38,18 +38,6 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-picocli</artifactId>
     </dependency>
-<!--
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>${javafx-controls.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-fxml</artifactId>
-      <version>${javafx-controls.version}</version>
-    </dependency>
--->
     <dependency>
       <groupId>org.controlsfx</groupId>
       <artifactId>controlsfx</artifactId>
@@ -62,6 +50,10 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-scheduler</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -92,7 +84,7 @@
         <configuration>
           <compilerArgs>
             <arg>-parameters</arg>
-            <arg>-proc:full</arg><!-- Enable annotation processing explicitly -->
+            <arg>-proc:full</arg>
           </compilerArgs>
         </configuration>
       </plugin>

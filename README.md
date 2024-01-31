@@ -9,6 +9,7 @@ quarkus create app io.github.nostra:mcalert --java=21 --no-code
 quarkus extension add picocli
 quarkus extension add resteasy-reactive-jackson
 quarkus extension add rest-client-reactive-jackson
+quarkus extension add quarkus-scheduler
 ```
 
 ## Await javafx
@@ -24,6 +25,15 @@ In the mean time, I just skip the JavaFX part.
 ```shell
 java -jar target/quarkus-app/quarkus-run.jar 
 ```
+
+## Icons
+
+Icons downloaded from 
+- https://remixicon.com/icon/cloud-off-fill
+- https://remixicon.com/icon/bug-line
+- https://remixicon.com/icon/circle-line
+- https://remixicon.com/icon/pulse-line
+- https://remixicon.com/icon/shut-down-line
 
 ## Default doc from quarkus below
 

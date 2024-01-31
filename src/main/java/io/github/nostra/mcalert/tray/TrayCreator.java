@@ -4,8 +4,11 @@ import io.github.nostra.mcalert.client.AlertService;
 import io.github.nostra.mcalert.exception.McException;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.Shutdown;
+import io.quarkus.scheduler.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.ws.rs.NotAllowedException;
+import jakarta.ws.rs.NotAuthorizedException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +17,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
 
@@ -23,7 +27,11 @@ public class TrayCreator  {
     private TrayIcon trayIcon ;
     private Image okImage;
     private Image failureImage;
+    private Image offlineImage;
+    private Image noAccessImage;
     private final Semaphore mutex = new Semaphore(1);
+    private boolean running = false;
+
 
     private final AlertService alertService;
 
@@ -34,11 +42,13 @@ public class TrayCreator  {
 
     public Semaphore start() {
         logger.info("Starting GUI...");
-
         try {
             mutex.acquire();
-            okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/arrow-up-circle-fill.png")));
-            failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/arrow-down-double-line.png")));
+            okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/pulse-line.png")));
+            failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/bug-line.png")));
+            offlineImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/cloud-off-fill.png")));
+            noAccessImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/prohibited-line.png")));
+
         } catch (IOException e) {
             throw new McException("Could not initialize", e);
         } catch (InterruptedException ignore) {
@@ -47,12 +57,14 @@ public class TrayCreator  {
 
         // sets up the tray icon (using awt code run on the swing thread).
         SwingUtilities.invokeLater(this::addIconToTray);
+        running = true;
         return mutex;
     }
 
     @Shutdown
     void shutdown() {
         logger.info("Shutdown-hook triggering (TrayCreator)");
+        running = true;
         SwingUtilities.invokeLater(this::removeIconFromTray);
     }
 
@@ -69,10 +81,9 @@ public class TrayCreator  {
     private void addIconToTray() {
         trayIcon = new TrayIcon(okImage);
         trayIcon.setImageAutoSize(true);
-        trayIcon.addActionListener(event -> SwingUtilities.invokeLater(()-> logger.info("Action listener triggered")));
         trayIcon.addActionListener(event -> SwingUtilities.invokeLater(this::refresh));
-
         trayIcon.setPopupMenu(constructTrayMenu());
+
         SystemTray tray = SystemTray.getSystemTray();
         try {
             tray.add(trayIcon);
@@ -84,7 +95,7 @@ public class TrayCreator  {
     private PopupMenu constructTrayMenu() {
         MenuItem refreshItem = new MenuItem("refresh");
         refreshItem.addActionListener(e -> {
-            logger.debug("Menuitem triggered, refreshing");
+            logger.debug("Menuitem triggered, force refresh");
             refresh();
         });
         MenuItem exitItem = new MenuItem("exit");
@@ -98,17 +109,37 @@ public class TrayCreator  {
         popup.add(refreshItem);
         popup.add(exitItem);
 
-        refreshItem.addActionListener(e -> logger.info("Some action on refreshItem"));
         return popup;
     }
 
-    private void refresh() {
-        var prom = alertService.getResult();
-        logger.info("Got prom with: "+prom.debugOutput());
-        final var imageToSet =
-            trayIcon.getImage() == okImage
-            ? failureImage
-            : okImage;
-        SwingUtilities.invokeLater( () -> trayIcon.setImage(imageToSet));
+    /**
+     * Call Prometheus endpoint and update the icon accordingly
+     */
+     @Scheduled( every = "${scheduledRefresh.every.expr:60s}")
+     void scheduledRefresh() {
+         if ( running ) {
+             refresh();
+         }
+     }
+
+     void refresh() {
+        try {
+            var prom = alertService.getResult();
+            logger.debug("Got prom with: " + prom.debugOutput());
+            final var imageToSet =
+                    trayIcon.getImage() == okImage
+                            ? failureImage
+                            : okImage;
+            SwingUtilities.invokeLater(() -> trayIcon.setImage(imageToSet));
+        } catch (Exception e) {
+            logger.info("Trouble calling prometheus. Masked exception is " + e.getMessage());
+            if (e.getCause() instanceof ConnectException) {
+                SwingUtilities.invokeLater(() -> trayIcon.setImage(offlineImage));
+            } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException ) {
+                SwingUtilities.invokeLater(() -> trayIcon.setImage(noAccessImage));
+            } else {
+                SwingUtilities.invokeLater(() -> trayIcon.setImage(failureImage));
+            }
+        }
     }
 }
