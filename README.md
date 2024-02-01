@@ -43,7 +43,7 @@ echo "Create dmg"
 cd target
 jpackage --verbose --name mcalert --input quarkus-app \
     --description "Read Prometheus endpoint and show status as toolbar icon" \
-    --icon src/main/resources/circle-line.png \
+    --icon ../mcalert.icns \
     --main-jar quarkus-run.jar 
 ```
 --main-class io.github.nostra.mcalert.Main
