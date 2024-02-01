@@ -1,6 +1,6 @@
 package io.github.nostra.mcalert.tray;
 
-import io.github.nostra.mcalert.client.AlertService;
+import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.exception.McException;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.Shutdown;
@@ -9,7 +9,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.NotAllowedException;
 import jakarta.ws.rs.NotAuthorizedException;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +31,11 @@ public class PrometheusTray {
     private final Semaphore mutex = new Semaphore(1);
     private boolean running = false;
 
-
-    private final AlertService alertService;
+    private AlertResource alertResource;
 
     @Inject
-    public PrometheusTray(@RestClient AlertService alertService) {
-        this.alertService = alertService;
+    public PrometheusTray( AlertResource alertResource) {
+        this.alertResource = alertResource;
     }
 
     public Semaphore start() {
@@ -124,7 +122,7 @@ public class PrometheusTray {
 
      void callAndRefreshIcon() {
         try {
-            var prom = alertService.getResult();
+            var prom = alertResource.getFiltered();
             logger.debug("Got prom with: " + prom.debugOutput());
             final var imageToSet =
                     prom.status().equalsIgnoreCase("success") && prom.noAlerts()

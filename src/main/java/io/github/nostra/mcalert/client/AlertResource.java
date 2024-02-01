@@ -2,11 +2,13 @@ package io.github.nostra.mcalert.client;
 
 import io.github.nostra.mcalert.model.AlertModel;
 import io.github.nostra.mcalert.model.PrometheusResult;
+import jakarta.inject.Singleton;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.List;
 
+@Singleton
 public class AlertResource {
     @RestClient
     AlertService alertService;
@@ -20,7 +22,8 @@ public class AlertResource {
                 .data()
                 .alerts()
                 .stream()
-                .filter(alertModel -> namesToIgnore.contains(alertModel.alertName()))
+                .filter(alertModel ->
+                        (!"firing".equals(alertModel.state()) ||  namesToIgnore.contains(alertModel.alertName())))
                 .toList();
         result.data().alerts().removeAll(toRemove);
         return result;
