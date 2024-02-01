@@ -25,6 +25,7 @@ public class PrometheusTray {
     private static final Logger logger = LoggerFactory.getLogger(PrometheusTray.class);
     private TrayIcon trayIcon ;
     private Image okImage;
+    private Image circleImage;
     private Image failureImage;
     private Image offlineImage;
     private Image noAccessImage;
@@ -43,6 +44,7 @@ public class PrometheusTray {
         try {
             mutex.acquire();
             okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/pulse-line.png")));
+            circleImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/circle-line.png")));
             failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/bug-line.png")));
             offlineImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/cloud-off-fill.png")));
             noAccessImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/prohibited-line.png")));
@@ -77,7 +79,7 @@ public class PrometheusTray {
 
 
     private void addIconToTray() {
-        trayIcon = new TrayIcon(okImage);
+        trayIcon = new TrayIcon(circleImage);
         trayIcon.setImageAutoSize(true);
         trayIcon.addActionListener(event -> SwingUtilities.invokeLater(this::callAndRefreshIcon));
         trayIcon.setPopupMenu(constructTrayMenu());
