@@ -16,7 +16,7 @@ quarkus extension add quarkus-scheduler
 
 A challenge is to wire up the JavaFX frameworks. This
 will be addressed shortly: https://github.com/quarkiverse/quarkus-fx/
-In the mean time, I just skip the JavaFX part.
+In the meantime, I just skip the JavaFX part.
 
 (JavaFX libraries added manually.)
 

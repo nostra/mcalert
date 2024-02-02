@@ -124,8 +124,12 @@ public class PrometheusTray {
 
      void callAndRefreshIcon() {
         try {
-            var prom = alertResource.getFiltered();
-            logger.debug("Got prom with: " + prom.debugOutput());
+            var prom = alertResource.getFiringAndRelevant();
+            if ( prom.noAlerts() ) {
+                logger.debug("Got prom with: " + prom.debugOutput());
+            } else {
+                logger.debug("Got alerts: "+prom.data().alerts());
+            }
             final var imageToSet =
                     prom.status().equalsIgnoreCase("success") && prom.noAlerts()
                             ? okImage

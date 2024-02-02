@@ -6,6 +6,7 @@ import io.github.nostra.mcalert.model.PrometheusResult;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -32,8 +33,9 @@ class AlertResourceTest {
     void testFilteredResult() {
         AlertResource alertResource = new AlertResource();
         alertResource.namesToIgnore = List.of("CPUThrottlingHigh");
+        alertResource.watchdogAlertNames = List.of();
         alertResource.alertService = this::readPrometheusData;
-        var filtered = alertResource.getFiltered();
+        var filtered = alertResource.getFiringAndRelevant();
         assertFalse(
                 filtered.data()
                         .alerts()
@@ -43,6 +45,35 @@ class AlertResourceTest {
         assertEquals(4, filtered.data().alerts().size());
         assertFalse(filtered.noAlerts());
     }
+
+    @Test
+    void testAllThatFireAreIgnored() {
+        AlertResource alertResource = new AlertResource();
+        alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown","KubeSchedulerDown");
+        alertResource.watchdogAlertNames = List.of();
+        alertResource.alertService = this::readPrometheusData;
+        assertTrue(alertResource.getFiringAndRelevant().noAlerts(), "When masking out all elements, no alerts should be left");
+    }
+
+    @Test
+    void testThatWatchdogGetsFound() {
+        AlertResource alertResource = new AlertResource();
+        alertResource.namesToIgnore = List.of("NodeClockNotSynchronising", "KubeControllerManagerDown","KubeSchedulerDown");
+        alertResource.watchdogAlertNames = List.of("CPUThrottlingHigh");
+        alertResource.alertService = this::readPrometheusData;
+        assertTrue(alertResource.getFiringAndRelevant().noAlerts(), "When masking out all elements, no alerts should be left");
+    }
+
+    @Test
+    void testThatMissingWatchdogGivesException() {
+        AlertResource alertResource = new AlertResource();
+        alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown","KubeSchedulerDown");
+        alertResource.watchdogAlertNames= List.of("NonExistingName");
+        alertResource.alertService = this::readPrometheusData;
+        assertFalse(alertResource.getFiringAndRelevant().noAlerts());
+        assertEquals(1, alertResource.getFiringAndRelevant().data().alerts().size());
+    }
+
 
     private PrometheusResult readPrometheusData() {
         try {
