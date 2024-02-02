@@ -126,7 +126,7 @@ public class PrometheusTray {
         try {
             var prom = alertResource.getFiringAndRelevant();
             if ( prom.noAlerts() ) {
-                logger.debug("Got prom with: " + prom.debugOutput());
+                logger.trace("Got prom with: " + prom.debugOutput());
             } else {
                 logger.debug("Got alerts: "+prom.data().alerts());
             }

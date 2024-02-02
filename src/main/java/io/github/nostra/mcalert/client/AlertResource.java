@@ -59,7 +59,7 @@ public class AlertResource {
 
     /**
      * Quarkus does not let us easily configure empty list. Having a entry which
-     * flags emptyness fixes this
+     * flags emptiness fixes this
      */
     private void clearListIfDisabled(List<String> list) {
         if (List.of("disabled").containsAll(list)) {
