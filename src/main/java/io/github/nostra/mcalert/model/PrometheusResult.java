@@ -9,16 +9,21 @@ package io.github.nostra.mcalert.model;
  */
 public record PrometheusResult(
         String status,
-        PrometheusData data
+        PrometheusData data,
+        String name
 ) {
     /**
      * @return Debug string
      */
     public String debugOutput() {
-        return "Number of alerts read: "+data.alerts().size();
+        return "Number of alerts read["+name+"]: "+data.alerts().size();
     }
 
     public boolean noAlerts() {
         return data() != null && data.alerts().isEmpty();
+    }
+
+    public PrometheusResult addName( String name ) {
+        return new PrometheusResult(status, data, name);
     }
 }

@@ -14,9 +14,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 class AlertResourceTest {
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static PrometheusResult retrieveFirstFiringAndRelevantAlert(AlertResource alertResource) {
+        return alertResource.getFiringAndRelevant().values().stream().iterator().next();
+    }
 
     @Test
     void testSerialization() {
@@ -31,11 +36,11 @@ class AlertResourceTest {
 
     @Test
     void testFilteredResult() {
-        AlertResource alertResource = new AlertResource();
+        AlertResource alertResource = new AlertResource(null);
         alertResource.namesToIgnore = List.of("CPUThrottlingHigh");
         alertResource.watchdogAlertNames = List.of();
-        alertResource.alertService = this::readPrometheusData;
-        var filtered = alertResource.getFiringAndRelevant();
+        alertResource.alertService = createNamedAlertService();
+        var filtered = retrieveFirstFiringAndRelevantAlert(alertResource);
         assertFalse(
                 filtered.data()
                         .alerts()
@@ -48,32 +53,36 @@ class AlertResourceTest {
 
     @Test
     void testAllThatFireAreIgnored() {
-        AlertResource alertResource = new AlertResource();
-        alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown","KubeSchedulerDown");
+        AlertResource alertResource = new AlertResource(null);
+        alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown");
         alertResource.watchdogAlertNames = List.of();
-        alertResource.alertService = this::readPrometheusData;
-        assertTrue(alertResource.getFiringAndRelevant().noAlerts(), "When masking out all elements, no alerts should be left");
+        alertResource.alertService = createNamedAlertService();
+        assertTrue(retrieveFirstFiringAndRelevantAlert(alertResource).noAlerts(), "When masking out all elements, no alerts should be left");
     }
 
     @Test
     void testThatWatchdogGetsFound() {
-        AlertResource alertResource = new AlertResource();
-        alertResource.namesToIgnore = List.of("NodeClockNotSynchronising", "KubeControllerManagerDown","KubeSchedulerDown");
+        AlertResource alertResource = new AlertResource(null);
+        alertResource.namesToIgnore = List.of("NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown");
         alertResource.watchdogAlertNames = List.of("CPUThrottlingHigh");
-        alertResource.alertService = this::readPrometheusData;
-        assertTrue(alertResource.getFiringAndRelevant().noAlerts(), "When masking out all elements, no alerts should be left");
+        alertResource.alertService = createNamedAlertService();
+        assertTrue(retrieveFirstFiringAndRelevantAlert(alertResource).noAlerts(), "When masking out all elements, no alerts should be left");
     }
 
     @Test
     void testThatMissingWatchdogGivesException() {
-        AlertResource alertResource = new AlertResource();
-        alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown","KubeSchedulerDown");
-        alertResource.watchdogAlertNames= List.of("NonExistingName");
-        alertResource.alertService = this::readPrometheusData;
-        assertFalse(alertResource.getFiringAndRelevant().noAlerts());
-        assertEquals(1, alertResource.getFiringAndRelevant().data().alerts().size());
+        AlertResource alertResource = new AlertResource(null);
+        alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown");
+        alertResource.watchdogAlertNames = List.of("NonExistingName");
+        alertResource.alertService = createNamedAlertService();
+        assertFalse(retrieveFirstFiringAndRelevantAlert(alertResource).noAlerts());
+        assertEquals(1, retrieveFirstFiringAndRelevantAlert(alertResource).data().alerts().size());
     }
 
+
+    private Map<String, AlertService> createNamedAlertService() {
+        return Map.of("junit", this::readPrometheusData);
+    }
 
     private PrometheusResult readPrometheusData() {
         try {

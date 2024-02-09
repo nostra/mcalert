@@ -4,7 +4,6 @@ import io.github.nostra.mcalert.model.AlertModel;
 import io.github.nostra.mcalert.model.PrometheusResult;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.slf4j.Logger;
@@ -23,20 +22,19 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class AlertResource {
     private static final Logger logger = LoggerFactory.getLogger(AlertResource.class);
-
+    private final AlertEndpointConfig alertEndpointConfig;
     Map<String, AlertService> alertService;
-
     @ConfigProperty(name = "mcalert.ignore.alerts")
     List<String> namesToIgnore;
-
     /**
      * Watchdog alerts are alerts that should fire, they don't there is an error.
      */
     @ConfigProperty(name = "mcalert.watchdog.alerts")
     List<String> watchdogAlertNames;
 
-    @Inject
-    AlertEndpointConfig alertEndpointConfig;
+    public AlertResource(AlertEndpointConfig alertEndpointConfig) {
+        this.alertEndpointConfig = alertEndpointConfig;
+    }
 
     @PostConstruct
     void init() {
@@ -67,29 +65,32 @@ public class AlertResource {
     public Map<String, PrometheusResult> getFiringAndRelevant() {
         return alertService.entrySet()
                 .stream()
-                //.map(entry -> Map.entry( entry.getKey(), entry.getValue().callPrometheus()))
-                .map(entry -> {
-                    try {
-                        var result = entry.getValue().callPrometheus();
-                        List<AlertModel> toRemove = extractIrrelevantAlerts(result);
-                        result.data().alerts().removeAll(toRemove);
-                        if (result.data().alerts().isEmpty()) {
-                            // Ensure that watchdog alerts are present if nothing else fires
-                            result.data()
-                                    .alerts()
-                                    .addAll(findMissingWatchDogAlerts(toRemove));
-                        }
-                        return Map.entry(entry.getKey(), result);
-                    } catch (Exception e ) {
-                        PrometheusResult failed = new PrometheusResult("exception", null);
-                        logger.error("Got exception for ["+entry.getKey()+"] - masked: " +e);
-                        return Map.entry(entry.getKey(), failed);
-                    }
-
-                })
+                .map(this::processAlertService)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    private Map.Entry<String, PrometheusResult> processAlertService(Map.Entry<String, AlertService> entry) {
+        PrometheusResult result;
+        try {
+            result = entry.getValue().callPrometheus().addName(entry.getKey());
+            List<AlertModel> toRemove = extractIrrelevantAlerts(result);
+            result.data().alerts().removeAll(toRemove);
+            ensureWatchdogPresence(result, toRemove);
+        } catch (Exception e) {
+            result = new PrometheusResult("exception", null, entry.getKey());
+            logger.error("Got exception for [" + result.name() + "] - masked: " + e);
+        }
+        return Map.entry(result.name(), result);
+    }
+
+    private void ensureWatchdogPresence(PrometheusResult result, List<AlertModel> toRemove) {
+        if (result.data().alerts().isEmpty()) {
+            // Ensure that watchdog alerts are present if nothing else fires
+            result.data()
+                    .alerts()
+                    .addAll(findMissingWatchDogAlerts(toRemove));
+        }
+    }
 
     /**
      * Quarkus does not let us easily configure empty list. Having a entry which
@@ -101,6 +102,10 @@ public class AlertResource {
         }
     }
 
+    /**
+     * Irrelevant alerts are those that are not "firing", or that are in the ignore
+     * or watchdog list
+     */
     private List<AlertModel> extractIrrelevantAlerts(PrometheusResult result) {
         Predicate<AlertModel> irrelevantModels = alertModel ->
                 !"firing".equals(alertModel.state())

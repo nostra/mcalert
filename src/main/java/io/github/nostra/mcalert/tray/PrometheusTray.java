@@ -34,7 +34,7 @@ public class PrometheusTray {
     private final Semaphore mutex = new Semaphore(1);
     private boolean running = false;
 
-    private AlertResource alertResource;
+    private final AlertResource alertResource;
 
     @Inject
     public PrometheusTray( AlertResource alertResource) {
@@ -127,17 +127,11 @@ public class PrometheusTray {
      void callAndRefreshIcon() {
         try {
             var prom = alertResource.getFiringAndRelevant();
-            /*
-            if ( prom.stream().filter(p -> p.noAlerts() == false ).count() == 0) {
-                logger.trace("Got prom with: " + prom.debugOutput());
-            } else {
-                logger.debug("Got alerts: "+prom.data().alerts());
-            }*/
             var numSuccessful = prom.entrySet().stream()
                     .filter(p -> p.getValue().status().equalsIgnoreCase("success"))
                     .map( p -> {
                         if (p.getValue().noAlerts()) {
-                            logger.debug("Got prom["+p.getKey()+"] with: " + p.getValue().debugOutput());
+                            logger.debug("Got prometheus["+p.getKey()+"] with: " + p.getValue().debugOutput());
                         } else {
                             logger.debug("Got alerts["+p.getKey()+"]: "+p.getValue().data().alerts());
                         }
@@ -150,6 +144,7 @@ public class PrometheusTray {
                     numSuccessful == prom.size()
                             ? okImage
                             : failureImage;
+
             SwingUtilities.invokeLater(() -> trayIcon.setImage(imageToSet));
         } catch (Exception e) {
             logger.info("Trouble calling prometheus. Masked exception is " + e.getMessage());
