@@ -26,6 +26,14 @@ In the meantime, I just skip the JavaFX part.
 java -jar target/quarkus-app/quarkus-run.jar 
 ```
 
+## Configure
+
+Create a file in your home directory named `$HOME/.mcalert.properties` and
+configure endpoints. You can have as many endpoints as you like:
+```
+mcalert.prometheus.endpoints.<NAME>.uri=http://prometheus.somewhere.local.gd:9090/api/v1/alerts
+```
+
 ## Icons
 
 Icons downloaded from 

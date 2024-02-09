@@ -127,6 +127,10 @@ public class PrometheusTray {
      void callAndRefreshIcon() {
         try {
             var prom = alertResource.getFiringAndRelevant();
+            if ( prom.isEmpty() ) {
+                logger.info("Please configure Prometheus endpoints");
+                return;
+            }
             var numSuccessful = prom.entrySet().stream()
                     .filter(p -> p.getValue().status().equalsIgnoreCase("success"))
                     .map( p -> {
