@@ -100,7 +100,7 @@ public class PrometheusTray {
             logger.debug("Menuitem triggered, force refresh");
             callAndRefreshIcon();
         });
-        MenuItem exitItem = new MenuItem("exit");
+        MenuItem exitItem = new MenuItem("Exit");
         exitItem.addActionListener(e -> {
             logger.info("Exit chosen, platform exit");
             mutex.release();

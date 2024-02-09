@@ -23,9 +23,12 @@ import java.util.stream.Collectors;
 public class AlertResource {
     private static final Logger logger = LoggerFactory.getLogger(AlertResource.class);
     private final AlertEndpointConfig alertEndpointConfig;
-    Map<String, AlertService> alertService;
+
+    Map<String, AlertCaller> alertEndpointMap;
+
     @ConfigProperty(name = "mcalert.ignore.alerts")
     List<String> namesToIgnore;
+
     /**
      * Watchdog alerts are alerts that should fire, they don't there is an error.
      */
@@ -38,12 +41,12 @@ public class AlertResource {
 
     @PostConstruct
     void init() {
-        alertService = createClientMap();
+        alertEndpointMap = createClientMap();
         clearListIfDisabled(namesToIgnore);
         clearListIfDisabled(watchdogAlertNames);
     }
 
-    public Map<String, AlertService> createClientMap() {
+    private Map<String, AlertCaller> createClientMap() {
         return alertEndpointConfig.endpoints()
                 .entrySet()
                 .stream()
@@ -53,7 +56,7 @@ public class AlertResource {
                                         .baseUri(entry.getValue().uri())
                                         .connectTimeout(2, TimeUnit.SECONDS)
                                         .readTimeout(5, TimeUnit.SECONDS)
-                                        .build(AlertService.class)
+                                        .build(AlertCaller.class)
                         ))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -63,13 +66,13 @@ public class AlertResource {
      * of watchdog alert
      */
     public Map<String, PrometheusResult> getFiringAndRelevant() {
-        return alertService.entrySet()
+        return alertEndpointMap.entrySet()
                 .stream()
                 .map(this::processAlertService)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private Map.Entry<String, PrometheusResult> processAlertService(Map.Entry<String, AlertService> entry) {
+    private Map.Entry<String, PrometheusResult> processAlertService(Map.Entry<String, AlertCaller> entry) {
         PrometheusResult result;
         try {
             result = entry.getValue().callPrometheus().addName(entry.getKey());

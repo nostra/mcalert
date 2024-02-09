@@ -39,7 +39,7 @@ class AlertResourceTest {
         AlertResource alertResource = new AlertResource(null);
         alertResource.namesToIgnore = List.of("CPUThrottlingHigh");
         alertResource.watchdogAlertNames = List.of();
-        alertResource.alertService = createNamedAlertService();
+        alertResource.alertEndpointMap = createNamedAlertService();
         var filtered = retrieveFirstFiringAndRelevantAlert(alertResource);
         assertFalse(
                 filtered.data()
@@ -56,7 +56,7 @@ class AlertResourceTest {
         AlertResource alertResource = new AlertResource(null);
         alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown");
         alertResource.watchdogAlertNames = List.of();
-        alertResource.alertService = createNamedAlertService();
+        alertResource.alertEndpointMap = createNamedAlertService();
         assertTrue(retrieveFirstFiringAndRelevantAlert(alertResource).noAlerts(), "When masking out all elements, no alerts should be left");
     }
 
@@ -65,7 +65,7 @@ class AlertResourceTest {
         AlertResource alertResource = new AlertResource(null);
         alertResource.namesToIgnore = List.of("NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown");
         alertResource.watchdogAlertNames = List.of("CPUThrottlingHigh");
-        alertResource.alertService = createNamedAlertService();
+        alertResource.alertEndpointMap = createNamedAlertService();
         assertTrue(retrieveFirstFiringAndRelevantAlert(alertResource).noAlerts(), "When masking out all elements, no alerts should be left");
     }
 
@@ -74,13 +74,13 @@ class AlertResourceTest {
         AlertResource alertResource = new AlertResource(null);
         alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown");
         alertResource.watchdogAlertNames = List.of("NonExistingName");
-        alertResource.alertService = createNamedAlertService();
+        alertResource.alertEndpointMap = createNamedAlertService();
         assertFalse(retrieveFirstFiringAndRelevantAlert(alertResource).noAlerts());
         assertEquals(1, retrieveFirstFiringAndRelevantAlert(alertResource).data().alerts().size());
     }
 
 
-    private Map<String, AlertService> createNamedAlertService() {
+    private Map<String, AlertCaller> createNamedAlertService() {
         return Map.of("junit", this::readPrometheusData);
     }
 
