@@ -8,6 +8,7 @@ module io.github.nostra.mcalert {
     requires microprofile.rest.client.api;
     requires microprofile.config.api;
     requires quarkus.scheduler.api;
+    requires smallrye.config.core;
 
     opens io.github.nostra.mcalert;
     exports io.github.nostra.mcalert;

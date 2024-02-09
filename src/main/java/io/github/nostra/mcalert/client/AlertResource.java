@@ -1,11 +1,13 @@
 package io.github.nostra.mcalert.client;
 
+import io.github.nostra.mcalert.exception.McException;
 import io.github.nostra.mcalert.model.AlertModel;
 import io.github.nostra.mcalert.model.PrometheusResult;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,28 +17,45 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 @ApplicationScoped
 public class AlertResource {
     private static final Logger logger = LoggerFactory.getLogger(AlertResource.class);
 
-    @RestClient
     AlertService alertService;
 
-    @ConfigProperty(name = "prometheus.ignore.alerts")
+    @ConfigProperty(name = "mcalert.ignore.alerts")
     List<String> namesToIgnore;
 
     /**
      * Watchdog alerts are alerts that should fire, they don't there is an error.
      */
-    @ConfigProperty(name = "prometheus.watchdog.alerts")
+    @ConfigProperty(name = "mcalert.watchdog.alerts")
     List<String> watchdogAlertNames;
+
+    @Inject
+    AlertEndpointConfig alertEndpointConfig;
 
     @PostConstruct
     void init() {
+        alertService = createClient();
         clearListIfDisabled(namesToIgnore);
         clearListIfDisabled(watchdogAlertNames);
+    }
+
+    public AlertService createClient() {
+        if ( alertEndpointConfig.endpoints().size() != 1) {
+            throw new McException("Supporting more than 1 config is WIP");
+        }
+
+        return RestClientBuilder.newBuilder()
+                //.baseUri(new URI("http://localhost:9090/api/v1/alerts"))
+                .baseUri(alertEndpointConfig.endpoints().getFirst().uri())
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
+                .build(AlertService.class);
     }
 
     /**
