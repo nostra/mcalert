@@ -62,6 +62,7 @@ public class AlertResource {
     }
 
     /**
+     * If there is a communication problem, an exception is thrown
      * @return data structure with only firing and relevant alerts. Ensure presence
      * of watchdog alert
      */
@@ -80,8 +81,9 @@ public class AlertResource {
             result.data().alerts().removeAll(toRemove);
             ensureWatchdogPresence(result, toRemove);
         } catch (Exception e) {
-            result = new PrometheusResult("exception", null, entry.getKey());
-            logger.error("Got exception for [" + result.name() + "] - masked: " + e);
+            // Log and rethrow
+            logger.error("Got exception for [" + entry.getKey() + "] - masked: " + e);
+            throw e;
         }
         return Map.entry(result.name(), result);
     }

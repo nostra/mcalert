@@ -34,16 +34,7 @@ configure endpoints. You can have as many endpoints as you like:
 mcalert.prometheus.endpoints.<NAME>.uri=http://prometheus.somewhere.local.gd:9090/api/v1/alerts
 ```
 
-## Icons
-
-Icons downloaded from 
-- https://remixicon.com/icon/cloud-off-fill
-- https://remixicon.com/icon/bug-line
-- https://remixicon.com/icon/circle-line
-- https://remixicon.com/icon/pulse-line
-- https://remixicon.com/icon/shut-down-line
-
-## 
+## Create a Mac DMG image
 
 ```shell
 mvn -B clean package
@@ -55,6 +46,17 @@ jpackage --verbose --name mcalert --input quarkus-app \
     --main-jar quarkus-run.jar 
 ```
 --main-class io.github.nostra.mcalert.Main
+
+## Icons
+
+Icons downloaded from
+- https://remixicon.com/icon/cloud-off-fill
+- https://remixicon.com/icon/bug-line
+- https://remixicon.com/icon/circle-line
+- https://remixicon.com/icon/pulse-line
+- https://remixicon.com/icon/shut-down-line
+
+
 ## Default doc from quarkus below
 
 
