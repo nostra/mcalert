@@ -5,7 +5,6 @@ import io.github.nostra.mcalert.model.PrometheusResult;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +14,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -24,7 +22,7 @@ public class AlertResource {
     private static final Logger logger = LoggerFactory.getLogger(AlertResource.class);
     private final AlertEndpointConfig alertEndpointConfig;
 
-    Map<String, AlertCaller> alertEndpointMap;
+    Map<String, SingleEndpointPoller> alertEndpointMap;
 
     @ConfigProperty(name = "mcalert.ignore.alerts")
     List<String> namesToIgnore;
@@ -46,18 +44,12 @@ public class AlertResource {
         clearListIfDisabled(watchdogAlertNames);
     }
 
-    private Map<String, AlertCaller> createClientMap() {
+    private Map<String, SingleEndpointPoller> createClientMap() {
         return alertEndpointConfig.endpoints()
                 .entrySet()
                 .stream()
                 .map(entry ->
-                        Map.entry(entry.getKey(),
-                                RestClientBuilder.newBuilder()
-                                        .baseUri(entry.getValue().uri())
-                                        .connectTimeout(2, TimeUnit.SECONDS)
-                                        .readTimeout(5, TimeUnit.SECONDS)
-                                        .build(AlertCaller.class)
-                        ))
+                        Map.entry(entry.getKey(), new SingleEndpointPoller(entry.getValue().uri())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -73,11 +65,16 @@ public class AlertResource {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    // TODO Clean up
+    public Map<String, SingleEndpointPoller> map() {
+        return alertEndpointMap;
+    }
+
     /**
      * Process one and one endpoint
      * @return An entry where the key is the configuration name
      */
-    private Map.Entry<String, PrometheusResult> processAlertService(Map.Entry<String, AlertCaller> entry) {
+    private Map.Entry<String, PrometheusResult> processAlertService(Map.Entry<String, SingleEndpointPoller> entry) {
         PrometheusResult result;
         try {
             result = entry.getValue().callPrometheus().addName(entry.getKey());

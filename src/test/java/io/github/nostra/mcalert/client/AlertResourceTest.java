@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -80,8 +81,12 @@ class AlertResourceTest {
     }
 
 
-    private Map<String, AlertCaller> createNamedAlertService() {
-        return Map.of("junit", this::readPrometheusData);
+    private Map<String, SingleEndpointPoller> createNamedAlertService() {
+        try {
+            return Map.of("junit", new SingleEndpointPollerTest());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private PrometheusResult readPrometheusData() {
@@ -93,4 +98,15 @@ class AlertResourceTest {
             throw new McException("Trouble reading prometheus test file", e);
         }
     }
+
+    private class SingleEndpointPollerTest extends  SingleEndpointPoller {
+        public SingleEndpointPollerTest() throws URISyntaxException {
+            super();
+        }
+
+        @Override
+        public PrometheusResult callPrometheus() {
+            return readPrometheusData();
+        }
+    };
 }

@@ -18,6 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
@@ -95,10 +96,17 @@ public class PrometheusTray {
     }
 
     private PopupMenu constructTrayMenu() {
+        var menuItems = new ArrayList<MenuItem>();
         MenuItem refreshItem = new MenuItem("refresh");
         refreshItem.addActionListener(e -> {
             logger.debug("Menuitem triggered, force refresh");
             callAndRefreshIcon();
+        });
+        menuItems.add( refreshItem );
+        alertResource.map().forEach((key, value) -> {
+            AlertMenuItem item = new AlertMenuItem(key);
+            value.addPropertyChangeListener(item);
+            menuItems.add(item);
         });
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.addActionListener(e -> {
@@ -106,10 +114,10 @@ public class PrometheusTray {
             mutex.release();
             Quarkus.asyncExit();
         });
+        menuItems.add(exitItem);
 
         PopupMenu popup = new PopupMenu();
-        popup.add(refreshItem);
-        popup.add(exitItem);
+        menuItems.forEach(popup::add);
 
         return popup;
     }
