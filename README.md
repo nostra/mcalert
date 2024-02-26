@@ -32,7 +32,10 @@ Create a file in your home directory named `$HOME/.mcalert.properties` and
 configure endpoints. You can have as many endpoints as you like:
 ```
 mcalert.prometheus.endpoints.<NAME>.uri=http://prometheus.somewhere.local.gd:9090/api/v1/alerts
+mcalert.prometheus.endpoints.<NAME>.ignore-alerts=CPUThrottlingHigh,KubeControllerManagerDown
+mcalert.prometheus.endpoints.<NAME>.watchdog-alerts=disabled
 ```
+You can have different endpoints with different `NAME`. Fill in the relevant alerts for each environment.
 
 ## Create a Mac DMG image
 

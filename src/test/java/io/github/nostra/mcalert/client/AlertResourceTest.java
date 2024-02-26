@@ -10,23 +10,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 class AlertResourceTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static PrometheusResult retrieveFirstFiringAndRelevantAlert(AlertResource alertResource) {
-        return alertResource.getFiringAndRelevant().values().stream().iterator().next();
-    }
 
     @Test
     void testSerialization() {
         PrometheusResult result = readPrometheusData();
+
         assertNotNull(result);
         assertEquals("success", result.status());
         assertEquals(11, result.data().alerts().size());
@@ -37,11 +35,8 @@ class AlertResourceTest {
 
     @Test
     void testFilteredResult() {
-        AlertResource alertResource = new AlertResource(null);
-        alertResource.namesToIgnore = List.of("CPUThrottlingHigh");
-        alertResource.watchdogAlertNames = List.of();
-        alertResource.alertEndpointMap = createNamedAlertService();
-        var filtered = retrieveFirstFiringAndRelevantAlert(alertResource);
+        SingleEndpointPoller sep = createMockPoller(List.of("CPUThrottlingHigh"), new ArrayList<>());
+        var filtered = sep.callPrometheus("junit");
         assertFalse(
                 filtered.data()
                         .alerts()
@@ -54,39 +49,59 @@ class AlertResourceTest {
 
     @Test
     void testAllThatFireAreIgnored() {
-        AlertResource alertResource = new AlertResource(null);
-        alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown");
-        alertResource.watchdogAlertNames = List.of();
-        alertResource.alertEndpointMap = createNamedAlertService();
-        assertTrue(retrieveFirstFiringAndRelevantAlert(alertResource).noAlerts(), "When masking out all elements, no alerts should be left");
+        SingleEndpointPoller sep = createMockPoller(
+                List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown"),
+                new ArrayList<>()
+        );
+        var filtered = sep.callPrometheus("junit");
+
+        assertTrue(filtered.noAlerts(), "When masking out all elements, no alerts should be left");
     }
 
     @Test
     void testThatWatchdogGetsFound() {
-        AlertResource alertResource = new AlertResource(null);
-        alertResource.namesToIgnore = List.of("NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown");
-        alertResource.watchdogAlertNames = List.of("CPUThrottlingHigh");
-        alertResource.alertEndpointMap = createNamedAlertService();
-        assertTrue(retrieveFirstFiringAndRelevantAlert(alertResource).noAlerts(), "When masking out all elements, no alerts should be left");
+        SingleEndpointPoller sep = createMockPoller(
+                List.of("NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown"),
+                List.of("CPUThrottlingHigh"));
+        assertTrue(sep.callPrometheus("junit").noAlerts(), "Watchdog makes all become masked");
     }
 
     @Test
-    void testThatMissingWatchdogGivesException() {
+    void testThatMissingWatchdogGivesError() {
+        SingleEndpointPoller sep = createMockPoller(
+                List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown"),
+                List.of("NonExistingName"));
         AlertResource alertResource = new AlertResource(null);
-        alertResource.namesToIgnore = List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown");
-        alertResource.watchdogAlertNames = List.of("NonExistingName");
-        alertResource.alertEndpointMap = createNamedAlertService();
-        assertFalse(retrieveFirstFiringAndRelevantAlert(alertResource).noAlerts());
-        assertEquals(1, retrieveFirstFiringAndRelevantAlert(alertResource).data().alerts().size());
+        var filtered = sep.callPrometheus("junit");
+
+        assertFalse(filtered.noAlerts());
+        assertEquals(1, filtered.data().alerts().size());
     }
 
+    private SingleEndpointPoller createMockPoller(final List<String> ignore, final List<String> watchdog) {
+        AlertEndpointConfig.AlertEndpoint cfg = new AlertEndpointConfig.AlertEndpoint() {
+            @Override
+            public URI uri() {
+                return null;
+            }
 
-    private Map<String, SingleEndpointPoller> createNamedAlertService() {
-        try {
-            return Map.of("junit", new SingleEndpointPollerTest());
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+            @Override
+            public Optional<String> auth() {
+                return Optional.empty();
+            }
+
+            @Override
+            public List<String> ignoreAlerts() {
+                return ignore;
+            }
+
+            @Override
+            public List<String> watchdogAlerts() {
+                return watchdog;
+            }
+        };
+        AlertCaller caller = this::readPrometheusData;
+        return new SingleEndpointPoller(cfg, caller);
     }
 
     private PrometheusResult readPrometheusData() {
@@ -98,15 +113,4 @@ class AlertResourceTest {
             throw new McException("Trouble reading prometheus test file", e);
         }
     }
-
-    private class SingleEndpointPollerTest extends  SingleEndpointPoller {
-        public SingleEndpointPollerTest() throws URISyntaxException {
-            super();
-        }
-
-        @Override
-        public PrometheusResult callPrometheus() {
-            return readPrometheusData();
-        }
-    };
 }

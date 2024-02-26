@@ -2,14 +2,11 @@ package io.github.nostra.mcalert.tray;
 
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.exception.McException;
-import io.github.nostra.mcalert.model.PrometheusResult;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.Shutdown;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.NotAllowedException;
-import jakarta.ws.rs.NotAuthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,9 +14,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
 
@@ -133,40 +128,14 @@ public class PrometheusTray {
      }
 
      void callAndRefreshIcon() {
-        try {
-            var prom = alertResource.getFiringAndRelevant();
-            if ( prom.isEmpty() ) {
-                logger.info("Please configure Prometheus endpoints");
-                return;
-            }
-            var numSuccessful = prom.entrySet().stream()
-                    .filter(p -> p.getValue().status().equalsIgnoreCase("success"))
-                    .map( p -> {
-                        if (p.getValue().noAlerts()) {
-                            logger.debug("Got prometheus["+p.getKey()+"] with: " + p.getValue().debugOutput());
-                        } else {
-                            logger.debug("Got alerts["+p.getKey()+"]: "+p.getValue().data().alerts());
-                        }
-                        return p;
-                    })
-                    .map(Map.Entry::getValue)
-                    .filter(PrometheusResult::noAlerts)
-                    .count();
-            final var imageToSet =
-                    numSuccessful == prom.size()
-                            ? okImage
-                            : failureImage;
-
-            SwingUtilities.invokeLater(() -> trayIcon.setImage(imageToSet));
-        } catch (Exception e) {
-            logger.info("Trouble calling prometheus. Masked exception is " + e.getMessage());
-            if (e.getCause() instanceof ConnectException) {
-                SwingUtilities.invokeLater(() -> trayIcon.setImage(offlineImage));
-            } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException ) {
-                SwingUtilities.invokeLater(() -> trayIcon.setImage(noAccessImage));
-            } else {
-                SwingUtilities.invokeLater(() -> trayIcon.setImage(failureImage));
-            }
+        var status = alertResource.fireAndGetCollatedStatus();
+        switch (status) {
+            case EMPTY -> logger.warn("Configuration error: No endpoints configured");
+            case SUCCESS -> SwingUtilities.invokeLater(() -> trayIcon.setImage(okImage));
+            case NO_ACCESS -> SwingUtilities.invokeLater(() -> trayIcon.setImage(noAccessImage));
+            case OFFLINE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(offlineImage));
+            case UNKNOWN_FAILURE, FAILURE, UNKNOWN -> SwingUtilities.invokeLater(() -> trayIcon.setImage(failureImage));
+            default -> throw new McException("Forgot to implement "+status+" in switch statement");
         }
     }
 }
