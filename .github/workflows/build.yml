@@ -19,26 +19,30 @@ jobs:
     - name: Build with Maven
       run: ./mvnw  -B package --file pom.xml
 
-    - name: Create dmg
-      run: |
-        cd target
-        jpackage --verbose --name mcalert --input quarkus-app \
-            --description "Read Prometheus endpoint and show status as toolbar icon" \
-            --icon ../mcalert.icns \
-            --main-jar quarkus-run.jar
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: dmg
-        path: |
-          target/mcalert-*.dmg
-        if-no-files-found: error
-
-    - name: Publish dmg on GitHub Releases
-      if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
-      uses: softprops/action-gh-release@v1
-      with:
-        fail_on_unmatched_files: true
-        files: |
-          target/mcalert-*.dmg
+# This needs to be run with "macos-11" (or something) in order to get it to build
+# correctly. Not bothering to fix that for this project.
+# Inspiration can probably be found at:
+#    https://github.com/cryptomator/cryptomator/blob/develop/.github/workflows/mac-dmg.yml
+#    - name: Create dmg
+#      run: |
+#        cd target
+#        jpackage --verbose --name mcalert --input quarkus-app \
+#            --description "Read Prometheus endpoint and show status as toolbar icon" \
+#            --icon ../mcalert.icns \
+#            --main-jar quarkus-run.jar
+#
+#    - name: Upload artifacts
+#      uses: actions/upload-artifact@v4
+#      with:
+#        name: dmg
+#        path: |
+#          target/mcalert-*.dmg
+#        if-no-files-found: error
+#
+#    - name: Publish dmg on GitHub Releases
+#      if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
+#      uses: softprops/action-gh-release@v1
+#      with:
+#        fail_on_unmatched_files: true
+#        files: |
+#          target/mcalert-*.dmg
