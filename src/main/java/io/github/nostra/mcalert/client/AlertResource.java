@@ -73,6 +73,10 @@ public class AlertResource {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    /**
+     * Process one and one endpoint
+     * @return An entry where the key is the configuration name
+     */
     private Map.Entry<String, PrometheusResult> processAlertService(Map.Entry<String, AlertCaller> entry) {
         PrometheusResult result;
         try {
