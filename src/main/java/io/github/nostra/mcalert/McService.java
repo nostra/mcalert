@@ -1,6 +1,5 @@
 package io.github.nostra.mcalert;
 
-import io.github.nostra.mcalert.exception.McException;
 import io.github.nostra.mcalert.tray.PrometheusTray;
 import io.quarkus.runtime.Shutdown;
 import jakarta.enterprise.context.Dependent;
@@ -30,9 +29,5 @@ public class McService {
     @Shutdown
     void shutdown() {
         logger.info("Shutdown-hook triggering (McService)");
-    }
-
-    public void loadConfig(String config) {
-        throw new McException("Not implemented yet, won't load "+config);
     }
 }

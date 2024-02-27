@@ -16,9 +16,6 @@ public class Main implements QuarkusApplication, Runnable {
 
     private final McService mcService;
 
-    @CommandLine.Option(names = {"-c", "--config"}, description = "Configuration")
-    String config;
-
     public Main(McService mcService) {
         this.mcService = mcService;
     }
@@ -36,9 +33,6 @@ public class Main implements QuarkusApplication, Runnable {
             return;
         }
 
-        if (config != null) {
-            mcService.loadConfig(config);
-        }
         Semaphore mutex =  mcService.execute();
         try {
             logger.info("Execute done, now block for exit");
