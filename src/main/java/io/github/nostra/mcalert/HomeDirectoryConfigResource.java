@@ -47,9 +47,6 @@ public class HomeDirectoryConfigResource implements ConfigSource {
         return 275;
     }
 
-
-    //configuration.put("mcalert.prometheus.endpoints.fake.uri", "http://fake.local.gd:9090/api/v1/alerts");
-
     @Override
     public Set<String> getPropertyNames() {
         return configuration.keySet();

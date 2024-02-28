@@ -1,6 +1,35 @@
 # mcalert
 
-Created with:
+This application gives you a nifty icon in the Mac Taskbar 
+(![pulse-line.png](src%2Fmain%2Fresources%2Fimages%2Fpulse-line.png)) which indicates
+the status of your Kubernetes cluster by examining the Prometheus status.
+
+When clicking on the icon, you get a dropdown list which allows you to identify the cluster
+which reports a problem:
+
+![All active Prometheus instances are happy](mcalert-green.png)
+![One or more unhappy Prometheus instances](mcalert-red.png)
+
+If you click on one of the configurations in the dropdown, you toggle 
+whether it gets checked or not. In the example images "local-prometheus" is
+deactivated. You decide your own names in the configuration.
+
+You need jdk-21 with jpackage. The rest of the dependencies should get pulled in.
+
+# Create a Mac DMG image
+
+```shell
+./mvnw -B clean package
+cd target
+jpackage --verbose --name mcalert --input quarkus-app \
+    --description "Read Prometheus endpoint and show status as toolbar icon" \
+    --icon ../mcalert.icns \
+    --main-jar quarkus-run.jar 
+```
+
+## Details
+
+This is a Quarkus based application created with:
 
 ```shell
 quarkus create app io.github.nostra:mcalert --java=21 --no-code
@@ -41,18 +70,6 @@ By increasing the index, you can add more headers.
 ```
 mcalert.prometheus.endpoints<NAME>.header[0].name=Authorization
 mcalert.prometheus.endpoints<NAME>.header[0].content=Basic dXNlcm5hbWU6cGFzc3dvcmQ=
-```
-
-## Create a Mac DMG image
-
-```shell
-mvn -B clean package
-echo "Create dmg"
-cd target
-jpackage --verbose --name mcalert --input quarkus-app \
-    --description "Read Prometheus endpoint and show status as toolbar icon" \
-    --icon ../mcalert.icns \
-    --main-jar quarkus-run.jar 
 ```
 
 ## Icons

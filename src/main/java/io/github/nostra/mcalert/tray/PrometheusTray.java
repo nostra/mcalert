@@ -83,6 +83,7 @@ public class PrometheusTray {
         trayIcon.setImageAutoSize(true);
         trayIcon.addActionListener(event -> SwingUtilities.invokeLater(this::callAndRefreshIcon));
         trayIcon.setPopupMenu(constructTrayMenu());
+        trayIcon.setToolTip("McAlert");
 
         SystemTray tray = SystemTray.getSystemTray();
         try {
@@ -123,7 +124,7 @@ public class PrometheusTray {
     /**
      * Call Prometheus endpoint and update the icon accordingly
      */
-     @Scheduled( every = "${scheduledRefresh.every.expr:60s}")
+     @Scheduled( every = "${scheduledRefresh.every:60s}")
      void scheduledRefresh() {
          if ( running ) {
              callAndRefreshIcon();
