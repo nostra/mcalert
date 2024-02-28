@@ -2,9 +2,12 @@ package io.github.nostra.mcalert.tray;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import java.beans.PropertyChangeEvent;
 
+@DisabledIfSystemProperty(named = "GITHUB_ACTIONS", matches = "true",
+        disabledReason = "Github is headless, and cannot build AWT class")
 class AlertMenuItemUnitTest {
     @Test
     void testPropertyChangeWithNegative666() {
