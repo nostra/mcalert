@@ -8,7 +8,6 @@
   <properties>
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
     <controlsfx.version>11.2.0</controlsfx.version>
-    <javafx-controls.version>21.0.2</javafx-controls.version>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
