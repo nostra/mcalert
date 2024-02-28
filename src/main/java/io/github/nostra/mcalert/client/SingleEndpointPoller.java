@@ -3,6 +3,7 @@ package io.github.nostra.mcalert.client;
 import io.github.nostra.mcalert.model.AlertModel;
 import io.github.nostra.mcalert.model.PrometheusData;
 import io.github.nostra.mcalert.model.PrometheusResult;
+import jakarta.ws.rs.client.ClientRequestFilter;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 
 import java.beans.PropertyChangeListener;
@@ -18,7 +19,7 @@ import java.util.function.Predicate;
 
 public class SingleEndpointPoller {
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    private AlertCaller caller;
+    private final AlertCaller caller;
     private int numAlerts = -42;
     private boolean active = true;
 
@@ -39,11 +40,22 @@ public class SingleEndpointPoller {
     }
 
     public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config) {
-        this( config, RestClientBuilder.newBuilder()
-                .baseUri(config.uri())
-                .connectTimeout(2, TimeUnit.SECONDS)
-                .readTimeout(5, TimeUnit.SECONDS)
+        this( config, createRestClient(config)
                 .build(AlertCaller.class));
+    }
+
+    private static RestClientBuilder createRestClient(AlertEndpointConfig.AlertEndpoint config) {
+        RestClientBuilder builder = RestClientBuilder.newBuilder()
+                .baseUri(config.uri())
+                .followRedirects(true)
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS);
+        config.header()
+                .orElse(List.of())
+                .forEach(header -> builder.register((ClientRequestFilter) requestContext
+                        -> requestContext.getHeaders().add(header.name(), header.content())));
+
+        return builder;
     }
 
     /**

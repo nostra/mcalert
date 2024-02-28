@@ -11,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotAllowedException;
 import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +68,13 @@ public class AlertResource {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException) {
                     status = NO_ACCESS;
+                } else if (e.getCause() instanceof WebApplicationException) {
+                    WebApplicationException cause = (WebApplicationException) e.getCause();
+                    switch ( cause.getResponse().getStatus() ) {
+                        case 401, 403 -> status = NO_ACCESS;
+                        case 404 -> status = OFFLINE;
+                        default -> status = UNKNOWN_FAILURE;
+                    }
                 } else {
                     status = UNKNOWN_FAILURE;
                 }

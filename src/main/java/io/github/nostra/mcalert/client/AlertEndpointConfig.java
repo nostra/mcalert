@@ -14,10 +14,15 @@ public interface AlertEndpointConfig {
     interface AlertEndpoint {
         URI uri();
 
-        Optional<String> auth();
+        Optional<List<Header>> header();
 
         List<String> ignoreAlerts();
 
         List<String> watchdogAlerts();
+    }
+
+    interface Header {
+        String name();
+        String content();
     }
 }

@@ -35,6 +35,14 @@ mcalert.prometheus.endpoints.<NAME>.watchdog-alerts=disabled
 ```
 You can have different endpoints with different `NAME`. Fill in the relevant alerts for each environment.
 
+You can supply headers. The example illustrates what to do when you want an `Authorization` header.
+By increasing the index, you can add more headers.
+
+```
+mcalert.prometheus.endpoints<NAME>.header[0].name=Authorization
+mcalert.prometheus.endpoints<NAME>.header[0].content=Basic dXNlcm5hbWU6cGFzc3dvcmQ=
+```
+
 ## Create a Mac DMG image
 
 ```shell

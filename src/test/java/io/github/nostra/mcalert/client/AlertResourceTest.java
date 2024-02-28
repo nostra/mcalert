@@ -86,7 +86,7 @@ class AlertResourceTest {
             }
 
             @Override
-            public Optional<String> auth() {
+            public Optional<List<AlertEndpointConfig.Header>> header() {
                 return Optional.empty();
             }
 
