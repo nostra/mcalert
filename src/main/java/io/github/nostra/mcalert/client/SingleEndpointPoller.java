@@ -1,6 +1,7 @@
 package io.github.nostra.mcalert.client;
 
 import io.github.nostra.mcalert.model.AlertModel;
+import io.github.nostra.mcalert.model.PrometheusData;
 import io.github.nostra.mcalert.model.PrometheusResult;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 
@@ -19,6 +20,7 @@ public class SingleEndpointPoller {
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private AlertCaller caller;
     private int numAlerts = -42;
+    private boolean active = true;
 
     List<String> namesToIgnore;
 
@@ -48,6 +50,10 @@ public class SingleEndpointPoller {
      * @return Return value is filtered for watchdog and irrelevant alerts
      */
     public PrometheusResult callPrometheus(String name) {
+        if ( !active ) {
+            return new PrometheusResult("success", new PrometheusData(Collections.emptyList()), name);
+        }
+
         try {
             PrometheusResult result = caller.callPrometheus().addName(name);
             List<AlertModel> toRemove = extractIrrelevantAlerts(result);
@@ -71,6 +77,12 @@ public class SingleEndpointPoller {
 
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.removePropertyChangeListener(listener);
+    }
+
+    public void toggleActive() {
+        active = !active;
+        pcs.firePropertyChange("numAlerts", numAlerts, -666);
+        numAlerts = -666;
     }
 
     private void ensureWatchdogPresence(PrometheusResult result, List<AlertModel> toRemove) {
@@ -128,5 +140,9 @@ public class SingleEndpointPoller {
                     .toList();
         }
         return Collections.emptyList();
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }

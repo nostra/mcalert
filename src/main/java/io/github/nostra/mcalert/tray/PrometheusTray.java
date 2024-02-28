@@ -27,6 +27,7 @@ public class PrometheusTray {
     private Image failureImage;
     private Image offlineImage;
     private Image noAccessImage;
+    private Image deactivatedImage;
     private final Semaphore mutex = new Semaphore(1);
     private boolean running = false;
 
@@ -41,11 +42,12 @@ public class PrometheusTray {
         logger.info("Starting GUI...");
         try {
             mutex.acquire();
-            okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/pulse-line.png")));
-            circleImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/circle-line.png")));
-            failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/bug-line.png")));
-            offlineImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/cloud-off-fill.png")));
-            noAccessImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/prohibited-line.png")));
+            okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/pulse-line.png")));
+            circleImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/circle-line.png")));
+            failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/bug-line.png")));
+            offlineImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/cloud-off-fill.png")));
+            noAccessImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/prohibited-line.png")));
+            deactivatedImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/information-off-line.png")));
 
         } catch (IOException e) {
             throw new McException("Could not initialize", e);
@@ -101,6 +103,7 @@ public class PrometheusTray {
         alertResource.map().forEach((key, value) -> {
             AlertMenuItem item = new AlertMenuItem(key);
             value.addPropertyChangeListener(item);
+            item.addActionListener(e -> alertResource.toggle( key ));
             menuItems.add(item);
         });
         MenuItem exitItem = new MenuItem("Exit");
@@ -134,7 +137,8 @@ public class PrometheusTray {
             case SUCCESS -> SwingUtilities.invokeLater(() -> trayIcon.setImage(okImage));
             case NO_ACCESS -> SwingUtilities.invokeLater(() -> trayIcon.setImage(noAccessImage));
             case OFFLINE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(offlineImage));
-            case UNKNOWN_FAILURE, FAILURE, UNKNOWN -> SwingUtilities.invokeLater(() -> trayIcon.setImage(failureImage));
+            case ALL_DEACTIVATED -> SwingUtilities.invokeLater(() -> trayIcon.setImage(deactivatedImage));
+            case UNKNOWN_FAILURE, FAILURE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(failureImage));
             default -> throw new McException("Forgot to implement "+status+" in switch statement");
         }
     }

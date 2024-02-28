@@ -1,5 +1,6 @@
 package io.github.nostra.mcalert.client;
 
+import static io.github.nostra.mcalert.client.EndpointCallEnum.ALL_DEACTIVATED;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.EMPTY;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.FAILURE;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.NO_ACCESS;
@@ -71,10 +72,16 @@ public class AlertResource {
                 }
             }
         }
-        return status;
+        return alertEndpointMap.entrySet().stream().noneMatch(p -> p.getValue().isActive())
+                ? ALL_DEACTIVATED
+                : status;
     }
 
     public Map<String, SingleEndpointPoller> map() {
         return alertEndpointMap;
+    }
+
+    public void toggle(String key) {
+        alertEndpointMap.get(key).toggleActive();
     }
 }

@@ -58,6 +58,7 @@ Icons downloaded from
 - https://remixicon.com/icon/circle-line
 - https://remixicon.com/icon/pulse-line
 - https://remixicon.com/icon/shut-down-line
+- https://remixicon.com/icon/information-off-line
 
 
 ## Default doc from quarkus below

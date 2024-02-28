@@ -10,6 +10,7 @@ public class AlertMenuItem extends MenuItem implements PropertyChangeListener {
     public static final String EMOJI_GREEN_CIRCLE = "\uD83D\uDFE2";
     public static final String EMOJI_RED_CIRCLE = "\uD83D\uDD34";
     public static final String EMOJI_SOON = "\uD83D\uDD1C";
+    public static final String EMOJI_DEACTIVATE = "\u23F9";
 
     private final String key;
 
@@ -20,7 +21,11 @@ public class AlertMenuItem extends MenuItem implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (0 != Integer.parseInt("" + evt.getNewValue())) {
+        int value = Integer.parseInt("" + evt.getNewValue());
+        
+        if (-666 == value ) {
+            setLabel(EMOJI_DEACTIVATE + " " + key);
+        } else if (0 != value ) {
             setLabel(EMOJI_RED_CIRCLE + " " + key);
         } else {
             setLabel(EMOJI_GREEN_CIRCLE + " " + key);
