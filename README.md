@@ -1,7 +1,7 @@
 # mcalert
 
 This application gives you a nifty icon in the Mac Taskbar 
-(![pulse-line.png](src%2Fmain%2Fresources%2Fimages%2Fpulse-line.png)) which indicates
+"![pulse-line.png](src%2Fmain%2Fresources%2Fimages%2Fpulse-line.png)" which indicates
 the status of your Kubernetes cluster by examining the Prometheus status.
 
 When clicking on the icon, you get a dropdown list which allows you to identify the cluster
@@ -27,6 +27,26 @@ jpackage --verbose --name mcalert --input quarkus-app \
     --main-jar quarkus-run.jar 
 ```
 
+## Configure
+
+Create a file in your home directory named `$HOME/.mcalert.properties` and
+configure endpoints. You can have as many endpoints as you like:
+```
+mcalert.prometheus.endpoints.<NAME>.uri=http://prometheus.somewhere.local.gd:9090/api/v1/alerts
+mcalert.prometheus.endpoints.<NAME>.ignore-alerts=CPUThrottlingHigh,KubeControllerManagerDown
+mcalert.prometheus.endpoints.<NAME>.watchdog-alerts=disabled
+```
+You can have different endpoints with different `NAME`. Fill in the relevant alerts for each environment.
+
+You can supply headers. The example illustrates what to do when you want an `Authorization` header.
+By increasing the index, you can add more headers.
+
+```
+mcalert.prometheus.endpoints<NAME>.header[0].name=Authorization
+mcalert.prometheus.endpoints<NAME>.header[0].content=Basic dXNlcm5hbWU6cGFzc3dvcmQ=
+```
+
+
 ## Details
 
 This is a Quarkus based application created with:
@@ -51,25 +71,6 @@ quarkus extension add quarkus-scheduler
 
 ```shell
 java -jar target/quarkus-app/quarkus-run.jar 
-```
-
-## Configure
-
-Create a file in your home directory named `$HOME/.mcalert.properties` and
-configure endpoints. You can have as many endpoints as you like:
-```
-mcalert.prometheus.endpoints.<NAME>.uri=http://prometheus.somewhere.local.gd:9090/api/v1/alerts
-mcalert.prometheus.endpoints.<NAME>.ignore-alerts=CPUThrottlingHigh,KubeControllerManagerDown
-mcalert.prometheus.endpoints.<NAME>.watchdog-alerts=disabled
-```
-You can have different endpoints with different `NAME`. Fill in the relevant alerts for each environment.
-
-You can supply headers. The example illustrates what to do when you want an `Authorization` header.
-By increasing the index, you can add more headers.
-
-```
-mcalert.prometheus.endpoints<NAME>.header[0].name=Authorization
-mcalert.prometheus.endpoints<NAME>.header[0].content=Basic dXNlcm5hbWU6cGFzc3dvcmQ=
 ```
 
 ## Icons
