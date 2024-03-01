@@ -16,6 +16,10 @@ deactivated. You decide your own names in the configuration.
 
 You need jdk-21 with jpackage. The rest of the dependencies should get pulled in.
 
+If running on Gnome, you need the
+[Tray Icons: Reloaded](https://extensions.gnome.org/extension/2890/tray-icons-reloaded/)
+extension.
+
 # Create a Mac DMG image
 
 ```shell
