@@ -69,9 +69,11 @@ public class PrometheusTray {
     }
 
     private void removeIconFromTray() {
-        SystemTray tray = SystemTray.getSystemTray();
         try {
+            SystemTray tray = SystemTray.getSystemTray();
             tray.remove(trayIcon);
+        } catch (UnsupportedOperationException ignore) {
+            // ignore
         } catch (Exception e) {
             logger.error("Trouble cleaning up....", e);
         }
