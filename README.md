@@ -46,6 +46,14 @@ mcalert.prometheus.endpoints<NAME>.header[0].name=Authorization
 mcalert.prometheus.endpoints<NAME>.header[0].content=Basic dXNlcm5hbWU6cGFzc3dvcmQ=
 ```
 
+### Dev mode configuration:
+
+Dev mode configuration in [application.properties](src%2Fmain%2Fresources%2Fapplication.properties),
+expects a port-forward proxy to Prometheus similar to:
+```
+kubectl port-forward -n monitoring svc/prometheus-k8s 9090
+ ```
+
 
 ## Details
 
