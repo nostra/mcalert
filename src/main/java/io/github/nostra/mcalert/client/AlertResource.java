@@ -63,7 +63,7 @@ public class AlertResource {
                     status = FAILURE;
                 }
             } catch (Exception e) {
-                logger.info("Trouble calling prometheus. Masked exception is " + e.getMessage());
+                logger.info("Trouble calling prometheus. Masked exception is {}", e.getMessage());
                 if (e.getCause() instanceof ConnectException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException) {
