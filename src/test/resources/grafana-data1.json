@@ -1,0 +1,35 @@
+{
+  "status": "success",
+  "data": {
+    "alerts": [
+      {
+        "labels": {
+          "alertname": "KubeSchedulerDown",
+          "severity": "critical"
+        },
+        "annotations": {
+          "description": "KubeScheduler has disappeared from Prometheus target discovery.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeschedulerdown",
+          "summary": "Target disappeared from Prometheus target discovery."
+        },
+        "state": "firing",
+        "activeAt": "2024-12-14T07:27:40.933497317Z",
+        "value": "1e+00"
+      },
+      {
+        "labels": {
+          "alertname": "KubeControllerManagerDown",
+          "severity": "critical"
+        },
+        "annotations": {
+          "description": "KubeControllerManager has disappeared from Prometheus target discovery.",
+          "runbook_url": "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecontrollermanagerdown",
+          "summary": "Target disappeared from Prometheus target discovery."
+        },
+        "state": "firing",
+        "activeAt": "2024-12-14T07:27:32.58080187Z",
+        "value": "1e+00"
+      }
+    ]
+  }
+}

@@ -50,6 +50,15 @@ mcalert.prometheus.endpoints<NAME>.header[0].name=Authorization
 mcalert.prometheus.endpoints<NAME>.header[0].content=Basic dXNlcm5hbWU6cGFzc3dvcmQ=
 ```
 
+### Use grafana as Prometheus proxy
+
+At the moment you need to manually find the datasource ID by calling "/api/datasource" on 
+grafana, similar to: `http://grafana.somewhere.local.gd:3000/api/datasources`
+
+```
+mcalert.prometheus.endpoints.grafana.uri=http://grafana.somewhere.local.gd:3000/api/datasources/uid/P1809F7CD0C75ACF3/resources/api/v1/alerts?state=firing
+****
+
 ### Dev mode configuration:
 
 Dev mode configuration in [application.properties](src%2Fmain%2Fresources%2Fapplication.properties),
