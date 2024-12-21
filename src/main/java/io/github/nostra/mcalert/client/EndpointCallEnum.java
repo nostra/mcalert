@@ -5,6 +5,7 @@ public enum EndpointCallEnum {
     FAILURE,
     NO_ACCESS,
     OFFLINE,
+    FOUR_O_FOUR,
     SUCCESS,
     UNKNOWN_FAILURE,
     ALL_DEACTIVATED

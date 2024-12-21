@@ -1,13 +1,18 @@
 package io.github.nostra.mcalert.client;
 
+import io.github.nostra.mcalert.config.AlertEndpointConfig;
 import io.github.nostra.mcalert.model.AlertModel;
+import io.github.nostra.mcalert.model.GrafanaDatasource;
 import io.github.nostra.mcalert.model.PrometheusData;
 import io.github.nostra.mcalert.model.PrometheusResult;
 import jakarta.ws.rs.client.ClientRequestFilter;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -18,20 +23,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 public class SingleEndpointPoller {
+    private static final Logger log = LoggerFactory.getLogger(SingleEndpointPoller.class);
+
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private final AlertCaller caller;
-    private int numAlerts = -42;
-    private boolean active = true;
-
-    List<String> namesToIgnore;
-
+    private final List<String> namesToIgnore;
     /**
      * Watchdog alerts are alerts that should fire, if they don't there is an error.
      */
-    List<String> watchdogAlertNames;
+    private final List<String> watchdogAlertNames;
+    private int numAlerts = -42;
+    private boolean active = true;
 
 
-    public SingleEndpointPoller( AlertEndpointConfig.AlertEndpoint config, AlertCaller caller ) {
+    public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config, AlertCaller caller) {
         this.caller = caller;
         this.watchdogAlertNames = config.watchdogAlerts();
         this.namesToIgnore = config.ignoreAlerts();
@@ -40,20 +45,16 @@ public class SingleEndpointPoller {
     }
 
     public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config) {
-        this( config, createRestClient(config)
-                .build(AlertCaller.class));
+        this(config, createRestClient(config).build(AlertCaller.class));
     }
 
     private static RestClientBuilder createRestClient(AlertEndpointConfig.AlertEndpoint config) {
-        RestClientBuilder builder = RestClientBuilder.newBuilder()
-                .baseUri(config.uri())
-                .followRedirects(true)
-                .connectTimeout(2, TimeUnit.SECONDS)
-                .readTimeout(5, TimeUnit.SECONDS);
-        config.header()
-                .orElse(List.of())
-                .forEach(header -> builder.register((ClientRequestFilter) requestContext
-                        -> requestContext.getHeaders().add(header.name(), header.content())));
+        return createRestClient(config.uri(), config.header().orElse(List.of()));
+    }
+
+    private static RestClientBuilder createRestClient(URI uri, List<AlertEndpointConfig.Header> headers) {
+        RestClientBuilder builder = RestClientBuilder.newBuilder().baseUri(uri).followRedirects(true).connectTimeout(2, TimeUnit.SECONDS).readTimeout(5, TimeUnit.SECONDS);
+        headers.forEach(header -> builder.register((ClientRequestFilter) requestContext -> requestContext.getHeaders().add(header.name(), header.content())));
 
         return builder;
     }
@@ -62,7 +63,7 @@ public class SingleEndpointPoller {
      * @return Return value is filtered for watchdog and irrelevant alerts
      */
     public PrometheusResult callPrometheus(String name) {
-        if ( !active ) {
+        if (!active) {
             return new PrometheusResult("success", new PrometheusData(Collections.emptyList()), name);
         }
 
@@ -73,10 +74,13 @@ public class SingleEndpointPoller {
             ensureWatchdogPresence(result, toRemove);
 
             int current = result.noAlerts() ? 0 : result.data().alerts().size();
+
+            log.trace("Calling api endpoint for configuration {}. Got {} alerts", name, current);
+
             pcs.firePropertyChange("numAlerts", numAlerts, current);
             numAlerts = current;
             return result;
-        } catch (Exception e ) {
+        } catch (Exception e) {
             pcs.firePropertyChange("numAlerts", numAlerts, -2);
             numAlerts = -2;
             throw e;
@@ -100,9 +104,7 @@ public class SingleEndpointPoller {
     private void ensureWatchdogPresence(PrometheusResult result, List<AlertModel> toRemove) {
         if (result.data().alerts().isEmpty()) {
             // Ensure that watchdog alerts are present if nothing else fires
-            result.data()
-                    .alerts()
-                    .addAll(findMissingWatchDogAlerts(toRemove));
+            result.data().alerts().addAll(findMissingWatchDogAlerts(toRemove));
         }
     }
 
@@ -121,40 +123,26 @@ public class SingleEndpointPoller {
      * or watchdog list
      */
     private List<AlertModel> extractIrrelevantAlerts(PrometheusResult result) {
-        Predicate<AlertModel> irrelevantModels = alertModel ->
-                !"firing".equals(alertModel.state())
-                        || namesToIgnore.contains(alertModel.alertName())
-                        || watchdogAlertNames.contains(alertModel.alertName());
+        Predicate<AlertModel> irrelevantModels = alertModel -> !"firing".equals(alertModel.state()) || namesToIgnore.contains(alertModel.alertName()) || watchdogAlertNames.contains(alertModel.alertName());
 
-        return result.data().alerts().stream()
-                .filter(irrelevantModels)
-                .toList();
+        return result.data().alerts().stream().filter(irrelevantModels).toList();
     }
 
     private List<AlertModel> findMissingWatchDogAlerts(List<AlertModel> toRemove) {
         Map<String, AlertModel> watchDogAlerts = new HashMap<>();
-        toRemove
-                .stream()
-                .filter(alertModel -> "firing".equals(alertModel.state()))
-                .filter(alertModel -> watchdogAlertNames.contains(alertModel.alertName()))
-                .forEach(alertModel ->
-                        watchDogAlerts.putIfAbsent(alertModel.alertName(), alertModel)
-                );
+        toRemove.stream().filter(alertModel -> "firing".equals(alertModel.state())).filter(alertModel -> watchdogAlertNames.contains(alertModel.alertName())).forEach(alertModel -> watchDogAlerts.putIfAbsent(alertModel.alertName(), alertModel));
         if (watchDogAlerts.size() != watchdogAlertNames.size()) {
-            return watchdogAlertNames.stream()
-                    .filter(name -> !watchDogAlerts.containsKey(name))
-                    .map(name -> new AlertModel(Collections.emptyMap(),
-                            Map.of("alertName", name),
-                            "missing",
-                            ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
-                            1L)
-                    )
-                    .toList();
+            return watchdogAlertNames.stream().filter(name -> !watchDogAlerts.containsKey(name)).map(name -> new AlertModel(Collections.emptyMap(), Map.of("alertName", name), "missing", ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT), 1L)).toList();
         }
         return Collections.emptyList();
     }
 
     public boolean isActive() {
         return active;
+    }
+
+    /// @return A list of datasources provided by grafana
+    public List<GrafanaDatasource> callGrafanaForDs() {
+        return caller.callGrafana();
     }
 }

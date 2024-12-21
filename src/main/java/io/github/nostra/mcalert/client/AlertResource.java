@@ -3,10 +3,14 @@ package io.github.nostra.mcalert.client;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.ALL_DEACTIVATED;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.EMPTY;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.FAILURE;
+import static io.github.nostra.mcalert.client.EndpointCallEnum.FOUR_O_FOUR;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.NO_ACCESS;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.OFFLINE;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.SUCCESS;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.UNKNOWN_FAILURE;
+import io.github.nostra.mcalert.config.AlertEndpointConfig;
+import io.github.nostra.mcalert.exception.McConfigurationException;
+import io.quarkus.runtime.Quarkus;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotAllowedException;
@@ -24,7 +28,7 @@ public class AlertResource {
     private static final Logger logger = LoggerFactory.getLogger(AlertResource.class);
     private final AlertEndpointConfig alertEndpointConfig;
 
-    Map<String, SingleEndpointPoller> alertEndpointMap;
+    private Map<String, SingleEndpointPoller> alertEndpointMap;
 
     public AlertResource(AlertEndpointConfig alertEndpointConfig) {
         this.alertEndpointConfig = alertEndpointConfig;
@@ -33,12 +37,30 @@ public class AlertResource {
     @PostConstruct
     void init() {
         alertEndpointMap = createClientMap();
+        GrafanaDatasourcePoller grafanaDatasourcePoller = new GrafanaDatasourcePoller(alertEndpointConfig);
+        // TODO Would need to update the alertEndpointMap if the grafana datasource changes
+
+        try {
+            grafanaDatasourcePoller.startPolling()
+                    .forEach((key, value) -> {
+                        if (alertEndpointMap.put(key, value) != null) {
+                            throw new McConfigurationException("Key '" + key + "' already exists. You need to rename the static endpoint.");
+                        }
+                    });
+            logger.info("AlertResource initialized with {} endpoints", alertEndpointMap.size());
+        } catch (Exception e) {
+            logger.error("When trying to read grafana datasource, an error occurred. Masked it is: "+ e.getMessage()+
+                    "\nJust quitting for the time being.");
+            alertEndpointMap.clear();
+            Quarkus.blockingExit();
+        }
     }
 
     private Map<String, SingleEndpointPoller> createClientMap() {
         return alertEndpointConfig.endpoints()
                 .entrySet()
                 .stream()
+                .filter(entry -> !(entry.getValue().isGrafana().orElse(Boolean.FALSE)))
                 .map(entry -> Map.entry(entry.getKey(), new SingleEndpointPoller(entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -68,11 +90,10 @@ public class AlertResource {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException) {
                     status = NO_ACCESS;
-                } else if (e.getCause() instanceof WebApplicationException) {
-                    WebApplicationException cause = (WebApplicationException) e.getCause();
+                } else if (e.getCause() instanceof WebApplicationException cause) {
                     switch ( cause.getResponse().getStatus() ) {
                         case 401, 403 -> status = NO_ACCESS;
-                        case 404 -> status = OFFLINE;
+                        case 404 -> status = FOUR_O_FOUR;
                         default -> status = UNKNOWN_FAILURE;
                     }
                 } else {

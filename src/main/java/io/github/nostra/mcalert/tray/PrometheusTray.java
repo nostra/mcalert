@@ -128,8 +128,12 @@ public class PrometheusTray {
      */
      @Scheduled( every = "${scheduledRefresh.every:60s}")
      void scheduledRefresh() {
-         if ( running ) {
-             callAndRefreshIcon();
+         try {
+             if ( running ) {
+                 callAndRefreshIcon();
+             }
+         } catch (Exception e) {
+             logger.error("Error refreshing icon. Masked: {}", e.getMessage());
          }
      }
 
@@ -137,12 +141,11 @@ public class PrometheusTray {
         var status = alertResource.fireAndGetCollatedStatus();
         switch (status) {
             case EMPTY -> logger.warn("Configuration error: No endpoints configured");
+            case FOUR_O_FOUR, OFFLINE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(offlineImage));
             case SUCCESS -> SwingUtilities.invokeLater(() -> trayIcon.setImage(okImage));
             case NO_ACCESS -> SwingUtilities.invokeLater(() -> trayIcon.setImage(noAccessImage));
-            case OFFLINE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(offlineImage));
             case ALL_DEACTIVATED -> SwingUtilities.invokeLater(() -> trayIcon.setImage(deactivatedImage));
             case UNKNOWN_FAILURE, FAILURE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(failureImage));
-            default -> throw new McException("Forgot to implement "+status+" in switch statement");
         }
     }
 }

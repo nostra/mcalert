@@ -11,8 +11,7 @@ import java.util.concurrent.Semaphore;
 
 @Dependent
 public class McService {
-    private final Logger log = LoggerFactory.getLogger(McService.class);
-    private static final Logger logger = LoggerFactory.getLogger(McService.class);
+    private static final Logger log = LoggerFactory.getLogger(McService.class);
 
     private PrometheusTray prometheusTray;
 
@@ -28,6 +27,6 @@ public class McService {
 
     @Shutdown
     void shutdown() {
-        logger.info("Shutdown-hook triggering (McService)");
+        log.info("Shutdown-hook triggering (McService)");
     }
 }

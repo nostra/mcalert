@@ -52,12 +52,29 @@ mcalert.prometheus.endpoints<NAME>.header[0].content=Basic dXNlcm5hbWU6cGFzc3dvc
 
 ### Use grafana as Prometheus proxy
 
-At the moment you need to manually find the datasource ID by calling "/api/datasource" on 
-grafana, similar to: `http://grafana.somewhere.local.gd:3000/api/datasources`
+Give mcalert the following configuration to dynamically find and use the
+datasource proxy for Prometheus:
+```
+mcalert.prometheus.endpoints.prometheus.uri=http://grafana.local.gd:31090/api/datasources
+mcalert.prometheus.endpoints.prometheus.is-grafana=true
+```
+The URI will, of course, be different for you. Notice the last `prometheus` part of the configuration.
+That **must match the name of the datasource** in grafana, as datasource configuration is a list
+in grafana. You also need to flag that this is a grafana endpoint.
+
+The other mcalert configuration properties are the same.
+
+### Finding and using Prometheus directly if datasource ID does not change
+
+If you know that the datasource are not going to change, you can configure grafana as 
+and endpoint directly, by creating a `mcalert.prometheus.endpoints` like this:
 
 ```
 mcalert.prometheus.endpoints.grafana.uri=http://grafana.somewhere.local.gd:3000/api/datasources/uid/P1809F7CD0C75ACF3/resources/api/v1/alerts?state=firing
-****
+```
+
+You can glean the ID by calling "/api/datasource" on
+grafana, similar to: `http://grafana.somewhere.local.gd:3000/api/datasources`
 
 ### Dev mode configuration:
 

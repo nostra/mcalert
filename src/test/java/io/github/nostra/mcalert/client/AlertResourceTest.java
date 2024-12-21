@@ -1,7 +1,10 @@
 package io.github.nostra.mcalert.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.nostra.mcalert.config.AlertEndpointConfig;
 import io.github.nostra.mcalert.exception.McException;
+import io.github.nostra.mcalert.model.GrafanaDatasource;
 import io.github.nostra.mcalert.model.PrometheusResult;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,7 +25,7 @@ class AlertResourceTest {
 
 
     @Test
-    void testSerialization() {
+    void testPrometheusSerialization() {
         PrometheusResult result = readPrometheusData();
 
         assertNotNull(result);
@@ -31,6 +34,17 @@ class AlertResourceTest {
 
         assertEquals("firing", result.data().alerts().getFirst().state());
         assertEquals("2024-01-30T07:06:09.236847853Z", result.data().alerts().getFirst().activeAt());
+    }
+
+    @Test
+    void testGrafanaSerialization() {
+        List<GrafanaDatasource> result = readGrafanaData();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        var item = result.getFirst();
+        assertEquals("prometheus", item.name());
+        assertEquals("P1809F7CD0C75ACF3", item.uid());
     }
 
     @Test
@@ -71,7 +85,6 @@ class AlertResourceTest {
         SingleEndpointPoller sep = createMockPoller(
                 List.of("CPUThrottlingHigh", "NodeClockNotSynchronising", "KubeControllerManagerDown", "KubeSchedulerDown"),
                 List.of("NonExistingName"));
-        AlertResource alertResource = new AlertResource(null);
         var filtered = sep.callPrometheus("junit");
 
         assertFalse(filtered.noAlerts());
@@ -83,6 +96,11 @@ class AlertResourceTest {
             @Override
             public URI uri() {
                 return null;
+            }
+
+            @Override
+            public Optional<Boolean> isGrafana() {
+                return Optional.empty();
             }
 
             @Override
@@ -100,9 +118,30 @@ class AlertResourceTest {
                 return watchdog;
             }
         };
-        AlertCaller caller = this::readPrometheusData;
-        return new SingleEndpointPoller(cfg, caller);
+        AlertCaller junitMockCaller = new AlertCaller() {
+            @Override
+            public PrometheusResult callPrometheus() {
+                return readPrometheusData();
+            }
+
+            @Override
+            public List<GrafanaDatasource> callGrafana() {
+                return List.of();
+            }
+        };
+        return new SingleEndpointPoller(cfg, junitMockCaller);
     }
+
+    private List<GrafanaDatasource> readGrafanaData() {
+        try {
+            URI uri = getClass().getClassLoader().getResource("grafana-datasource.json").toURI();
+            String content = Files.readString(Paths.get(uri), StandardCharsets.UTF_8);
+            return objectMapper.readValue(content, new TypeReference<>() {});
+        } catch (Exception e) {
+            throw new McException("Trouble reading prometheus test file", e);
+        }
+    }
+
 
     private PrometheusResult readPrometheusData() {
         try {

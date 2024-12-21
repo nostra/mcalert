@@ -1,4 +1,4 @@
-package io.github.nostra.mcalert.client;
+package io.github.nostra.mcalert.config;
 
 import io.smallrye.config.ConfigMapping;
 
@@ -13,6 +13,8 @@ public interface AlertEndpointConfig {
 
     interface AlertEndpoint {
         URI uri();
+
+        Optional<Boolean> isGrafana();
 
         Optional<List<Header>> header();
 
