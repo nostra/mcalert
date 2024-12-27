@@ -99,7 +99,7 @@ class AlertResourceTest {
             }
 
             @Override
-            public Optional<Boolean> isGrafana() {
+            public Optional<String> datasource() {
                 return Optional.empty();
             }
 

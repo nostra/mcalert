@@ -56,13 +56,17 @@ Give mcalert the following configuration to dynamically find and use the
 datasource proxy for Prometheus:
 ```
 mcalert.prometheus.endpoints.prometheus.uri=http://grafana.local.gd:31090/api/datasources
-mcalert.prometheus.endpoints.prometheus.is-grafana=true
+mcalert.prometheus.endpoints.prometheus.datasource=DATASOURCE_NAME
 ```
-The URI will, of course, be different for you. Notice the last `prometheus` part of the configuration.
+The URI will, of course, be different for you. Notice `DATASOURCE_NAME` part of the configuration.
 That **must match the name of the datasource** in grafana, as datasource configuration is a list
-in grafana. You also need to flag that this is a grafana endpoint.
+in grafana. By setting the datasource name, you have also flagged that this is a grafana datasource
+endpoint.
 
 The other mcalert configuration properties are the same.
+
+**Notice**: Currently the datasource is read upon start of mcalert. If the datasource
+changes, you need to restart the application. 
 
 ### Finding and using Prometheus directly if datasource ID does not change
 

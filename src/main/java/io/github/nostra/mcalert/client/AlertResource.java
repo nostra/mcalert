@@ -10,7 +10,6 @@ import static io.github.nostra.mcalert.client.EndpointCallEnum.SUCCESS;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.UNKNOWN_FAILURE;
 import io.github.nostra.mcalert.config.AlertEndpointConfig;
 import io.github.nostra.mcalert.exception.McConfigurationException;
-import io.quarkus.runtime.Quarkus;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotAllowedException;
@@ -21,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -49,10 +49,7 @@ public class AlertResource {
                     });
             logger.info("AlertResource initialized with {} endpoints", alertEndpointMap.size());
         } catch (Exception e) {
-            logger.error("When trying to read grafana datasource, an error occurred. Masked it is: "+ e.getMessage()+
-                    "\nJust quitting for the time being.");
-            alertEndpointMap.clear();
-            Quarkus.blockingExit();
+            logger.error("When trying to read grafana datasource, an error occurred. Masked it is: "+ e.getMessage(), e);
         }
     }
 
@@ -60,9 +57,13 @@ public class AlertResource {
         return alertEndpointConfig.endpoints()
                 .entrySet()
                 .stream()
-                .filter(entry -> !(entry.getValue().isGrafana().orElse(Boolean.FALSE)))
+                .filter(entry -> isDatasourceEmpty(entry.getValue().datasource()))
                 .map(entry -> Map.entry(entry.getKey(), new SingleEndpointPoller(entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    public static boolean isDatasourceEmpty(Optional<String> datasource) {
+        return datasource.isEmpty() || datasource.get().trim().isEmpty();
     }
 
     /**

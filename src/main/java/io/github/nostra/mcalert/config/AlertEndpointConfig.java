@@ -14,7 +14,9 @@ public interface AlertEndpointConfig {
     interface AlertEndpoint {
         URI uri();
 
-        Optional<Boolean> isGrafana();
+        /// If this endpoint is a grafana proxy, what is the name of the
+        /// prometheus datasource?
+        Optional<String> datasource();
 
         Optional<List<Header>> header();
 

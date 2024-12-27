@@ -1,6 +1,8 @@
 package io.github.nostra.mcalert.client;
 
+import static io.github.nostra.mcalert.client.AlertResource.isDatasourceEmpty;
 import io.github.nostra.mcalert.config.AlertEndpointConfig;
+import io.github.nostra.mcalert.exception.McConfigurationException;
 import io.github.nostra.mcalert.model.GrafanaDatasource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,28 +30,32 @@ public class GrafanaDatasourcePoller {
                 .endpoints()
                 .entrySet()
                 .stream()
-                .filter(entry -> (entry.getValue().isGrafana().orElse(Boolean.FALSE)))
-                .map(entry -> Map.entry(entry.getKey(), new SingleEndpointPoller(entry.getValue())))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-                .entrySet()
-                .stream()
-                .map(entry ->
-                        entry.getValue().callGrafanaForDs()
-                                .stream()
-                                .filter(d -> d.name().equals(entry.getKey()))
-                                .findFirst()
-                                .orElse(null)
-                )
+                .filter(entry -> !isDatasourceEmpty(entry.getValue().datasource()))
+                .map(entry -> {
+                    var ep = findEpFromDs(entry.getValue());
+                    return ep == null
+                            ? null
+                            : Map.entry(entry.getKey(), ep);
+                })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(
-                        GrafanaDatasource::name,
-                        grafanaDatasource -> {
-                            AlertEndpointConfig.AlertEndpoint ep = grafanaDatasourceConfig.endpoints().get(grafanaDatasource.name());
-                            AlertEndpointConfig.AlertEndpoint endpoint = new GrafanaAlertEndpoint(ep, grafanaDatasource);
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
 
-                            return new SingleEndpointPoller(endpoint);
-                        }
-                ));
+    private SingleEndpointPoller findEpFromDs(AlertEndpointConfig.AlertEndpoint alertEndpoint) {
+        List<SingleEndpointPoller> list = new SingleEndpointPoller(alertEndpoint)
+                .callGrafanaForDs()
+                .stream()
+                .filter(d -> d.name().equals(alertEndpoint.datasource().orElseThrow(() -> new McConfigurationException("Unexpected use in method"))))
+                .map(ds -> new GrafanaAlertEndpoint(alertEndpoint, ds))
+                .map(SingleEndpointPoller::new)
+                .toList();
+
+        if (list.size() != 1) {
+            log.error("Expected to find exactly one datasource for endpoint with uri {}, but found {}.", alertEndpoint.uri(), list.size());
+        }
+        return list.isEmpty()
+                ? null
+                : list.getFirst();
     }
 
 
@@ -64,6 +70,9 @@ public class GrafanaDatasourcePoller {
         private final GrafanaDatasource grafanaDatasource;
 
         public GrafanaAlertEndpoint(AlertEndpointConfig.AlertEndpoint ep, GrafanaDatasource grafanaDatasource) {
+            if ( ep == null || grafanaDatasource == null ) {
+                throw new McConfigurationException("Endpoint or datasource is null");
+            }
             this.ep = ep;
             this.grafanaDatasource = grafanaDatasource;
         }
@@ -76,10 +85,10 @@ public class GrafanaDatasourcePoller {
         }
 
         /// This class is dynamically created, and represents a prometheus endpoint read
-        /// from a grafana datasource. Thus, it shall answer false on whether it is a grafana endpoint.
+        /// from a grafana datasource. This is the datasource name.
         @Override
-        public Optional<Boolean> isGrafana() {
-            return Optional.of(Boolean.FALSE);
+        public Optional<String> datasource() {
+            return ep.datasource();
         }
 
         @Override
