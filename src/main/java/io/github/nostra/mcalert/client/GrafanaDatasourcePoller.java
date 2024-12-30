@@ -51,7 +51,8 @@ public class GrafanaDatasourcePoller {
                 .toList();
 
         if (list.size() != 1) {
-            log.error("Expected to find exactly one datasource for endpoint with uri {}, but found {}.", alertEndpoint.uri(), list.size());
+            log.error("Expected to find exactly one datasource name \"{}\" with uri {}, but found {}.",
+                    alertEndpoint.datasource().orElse("not configured"),  alertEndpoint.uri(), list.size());
         }
         return list.isEmpty()
                 ? null
