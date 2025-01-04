@@ -115,6 +115,16 @@ quarkus extension add quarkus-scheduler
 java -jar target/quarkus-app/quarkus-run.jar 
 ```
 
+## Test static file
+
+In order to test an endpoint the most easily, use jwebserver:
+
+```shell
+$$JAVA_HOME/bin/jwebserver -b localhost -p 9090 -d $PWD/src/test/resources 
+```
+
+Open http://localhost:9090/
+
 ## Icons
 
 Icons downloaded from
@@ -124,3 +134,4 @@ Icons downloaded from
 - https://remixicon.com/icon/pulse-line
 - https://remixicon.com/icon/shut-down-line
 - https://remixicon.com/icon/information-off-line
+- TODO Use this for 404 https://remixicon.com/icon/star-off-line
