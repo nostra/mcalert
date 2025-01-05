@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class SingleEndpointPoller {
     private static final Logger log = LoggerFactory.getLogger(SingleEndpointPoller.class);
@@ -78,6 +79,17 @@ public class SingleEndpointPoller {
             log.trace("Calling api endpoint for configuration {}. Got {} alerts", name, current);
 
             pcs.firePropertyChange("numAlerts", numAlerts, current);
+            if ( numAlerts != current && current >0 ) {
+                // Just log changed alerts for the moment. Note that it would not fire if one alert were exchanged with another...
+                log.debug("New alert(s) triggered: {}",
+                        result.data()
+                                .alerts()
+                                .stream()
+                                .flatMap(a -> a.labels().entrySet().stream())
+                                .filter(map -> map.getKey().equals("alertname"))
+                                .map(Map.Entry::getValue)
+                                .collect(Collectors.toSet()));
+            }
             numAlerts = current;
             return result;
         } catch (Exception e) {

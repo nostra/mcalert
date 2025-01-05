@@ -14,7 +14,7 @@ If you click on one of the configurations in the dropdown, you toggle
 whether it gets checked or not. In the example images "local-prometheus" is
 deactivated. You decide your own names in the configuration.
 
-You need jdk-21 with jpackage. The rest of the dependencies should get pulled in.
+You need jdk-23 with jpackage. The rest of the dependencies should get pulled in.
 
 If running on Gnome, you need the
 [Tray Icons: Reloaded](https://extensions.gnome.org/extension/2890/tray-icons-reloaded/)
@@ -26,7 +26,7 @@ extension.
 ./mvnw -B clean package
 cd target
 jpackage --verbose --name mcalert --input quarkus-app \
-    --description "Read Prometheus endpoint and show status as toolbar icon" \
+    --description "Read Prometheus endpoints and show status as toolbar icon" \
     --icon ../mcalert.icns \
     --main-jar quarkus-run.jar 
 ```

@@ -83,7 +83,7 @@ public class PrometheusTray {
     private void addIconToTray() {
         trayIcon = new TrayIcon(circleImage);
         trayIcon.setImageAutoSize(true);
-        trayIcon.addActionListener(event -> SwingUtilities.invokeLater(this::callAndRefreshIcon));
+        trayIcon.addActionListener(_ -> SwingUtilities.invokeLater(this::callAndRefreshIcon));
         trayIcon.setPopupMenu(constructTrayMenu());
         trayIcon.setToolTip("McAlert");
 
@@ -97,7 +97,7 @@ public class PrometheusTray {
 
     private PopupMenu constructTrayMenu() {
         var menuItems = new ArrayList<MenuItem>();
-        MenuItem refreshItem = new MenuItem("refresh");
+        var refreshItem = new MenuItem("refresh");
         refreshItem.addActionListener(e -> {
             logger.debug("Menuitem triggered, force refresh");
             callAndRefreshIcon();
@@ -106,11 +106,14 @@ public class PrometheusTray {
         alertResource.map().forEach((key, value) -> {
             AlertMenuItem item = new AlertMenuItem(key);
             value.addPropertyChangeListener(item);
-            item.addActionListener(e -> alertResource.toggle( key ));
+            item.addActionListener(e -> {
+                logger.info("Event is: {}", e);
+                alertResource.toggle( key );
+            });
             menuItems.add(item);
         });
-        MenuItem exitItem = new MenuItem("Exit");
-        exitItem.addActionListener(e -> {
+        var exitItem = new MenuItem("Exit");
+        exitItem.addActionListener(_ -> {
             logger.info("Exit chosen, platform exit");
             mutex.release();
             Quarkus.asyncExit();
