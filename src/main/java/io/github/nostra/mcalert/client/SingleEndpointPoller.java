@@ -2,6 +2,7 @@ package io.github.nostra.mcalert.client;
 
 import io.github.nostra.mcalert.config.AlertEndpointConfig;
 import io.github.nostra.mcalert.model.AlertModel;
+import io.github.nostra.mcalert.model.FiringAlertMeta;
 import io.github.nostra.mcalert.model.GrafanaDatasource;
 import io.github.nostra.mcalert.model.PrometheusData;
 import io.github.nostra.mcalert.model.PrometheusResult;
@@ -13,12 +14,14 @@ import org.slf4j.LoggerFactory;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URI;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -35,6 +38,7 @@ public class SingleEndpointPoller {
     private final List<String> watchdogAlertNames;
     private int numAlerts = -42;
     private boolean active = true;
+    private Map<String, FiringAlertMeta> firing = new HashMap<>();
 
 
     public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config, AlertCaller caller) {
@@ -70,6 +74,7 @@ public class SingleEndpointPoller {
 
         try {
             PrometheusResult result = caller.callPrometheus().addName(name);
+            updateFiringMapWith( result.data().alerts() );
             List<AlertModel> toRemove = extractIrrelevantAlerts(result);
             result.data().alerts().removeAll(toRemove);
             ensureWatchdogPresence(result, toRemove);
@@ -97,6 +102,24 @@ public class SingleEndpointPoller {
             numAlerts = -2;
             throw e;
         }
+    }
+
+    private void updateFiringMapWith(List<AlertModel> result) {
+        result.stream()
+                .filter(am -> "firing".equals(am.state()))
+                .forEach(am -> {
+                    FiringAlertMeta fam = firing.get(am.alertName());
+                    if ( fam == null ) {
+                        fam = new FiringAlertMeta(
+                                am.alertName(),
+                                1,
+                                Instant.now()
+                        );
+                    } else {
+                        fam = fam.increment();
+                    }
+                    firing.put(Objects.requireNonNull(fam).name(), fam);
+                });
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -135,7 +158,10 @@ public class SingleEndpointPoller {
      * or watchdog list
      */
     private List<AlertModel> extractIrrelevantAlerts(PrometheusResult result) {
-        Predicate<AlertModel> irrelevantModels = alertModel -> !"firing".equals(alertModel.state()) || namesToIgnore.contains(alertModel.alertName()) || watchdogAlertNames.contains(alertModel.alertName());
+        Predicate<AlertModel> irrelevantModels =
+                alertModel -> !"firing".equals(alertModel.state())
+                || namesToIgnore.contains(alertModel.alertName())
+                || watchdogAlertNames.contains(alertModel.alertName());
 
         return result.data().alerts().stream().filter(irrelevantModels).toList();
     }
@@ -156,5 +182,13 @@ public class SingleEndpointPoller {
     /// @return A list of datasources provided by grafana
     public List<GrafanaDatasource> callGrafanaForDs() {
         return caller.callGrafana();
+    }
+
+    /// Interim method to see which alarts are triggering and not. This
+    /// will later be presented as a popup
+    public void outputStatus() {
+        log.info("Ignoring: {}", namesToIgnore);
+        log.info("Also ignoring watchdog alerts: {} ", namesToIgnore);
+        firing.values().forEach(fire -> log.info("==> {}",fire));
     }
 }

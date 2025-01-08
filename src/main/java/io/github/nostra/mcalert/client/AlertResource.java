@@ -112,6 +112,8 @@ public class AlertResource {
     }
 
     public void toggle(String key) {
-        alertEndpointMap.get(key).toggleActive();
+        SingleEndpointPoller sep = alertEndpointMap.get(key);
+        sep.toggleActive();
+        sep.outputStatus();
     }
 }
