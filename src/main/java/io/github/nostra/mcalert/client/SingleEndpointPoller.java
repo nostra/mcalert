@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SingleEndpointPoller {
     private static final Logger log = LoggerFactory.getLogger(SingleEndpointPoller.class);
@@ -47,6 +48,11 @@ public class SingleEndpointPoller {
         this.namesToIgnore = config.ignoreAlerts();
         clearListIfDisabled(namesToIgnore);
         clearListIfDisabled(watchdogAlertNames);
+
+        // Iterate over the union set and add each item to the firing hashmap in order to see which that never fires
+        Stream.concat(watchdogAlertNames.stream(), namesToIgnore.stream())
+                .forEach(alertName -> firing
+                        .putIfAbsent(alertName, new FiringAlertMeta(alertName, 0, null)));
     }
 
     public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config) {
