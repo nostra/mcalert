@@ -18,6 +18,7 @@
     <maven.compiler.source>23</maven.compiler.source>
     <maven.compiler.target>23</maven.compiler.target>
     <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
+    <javafx-controls.version>23.0.1</javafx-controls.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -55,6 +56,12 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-web</artifactId>
+      <version>${javafx-controls.version}</version>
     </dependency>
   </dependencies>
   <build>

@@ -1,6 +1,7 @@
 package io.github.nostra.mcalert.client;
 
 import io.github.nostra.mcalert.config.AlertEndpointConfig;
+import io.github.nostra.mcalert.fxapp.StatusViewFxApp;
 import io.github.nostra.mcalert.model.AlertModel;
 import io.github.nostra.mcalert.model.FiringAlertMeta;
 import io.github.nostra.mcalert.model.GrafanaDatasource;
@@ -196,5 +197,21 @@ public class SingleEndpointPoller {
         log.info("Ignoring: {}", namesToIgnore);
         log.info("Also ignoring watchdog alerts: {} ", namesToIgnore);
         firing.values().forEach(fire -> log.info("==> {}",fire));
+
+        if ( statusViewFxApp == null ) {
+            statusViewFxApp = new StatusViewFxApp();
+            statusViewFxApp.startFxApp();
+        } else {
+            log.info("Got app already");
+        }
+        statusViewFxApp.show();
+        /*
+        Make this as an appliction
+
+        final WebView browser = new WebView();
+        final WebEngine webEngine = browser.getEngine();
+        webEngine.loadContent("<html><body>Testing</body></html>");
+*/
     }
+    private StatusViewFxApp statusViewFxApp = null;
 }
