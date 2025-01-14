@@ -19,5 +19,6 @@ module io.github.nostra.mcalert {
     exports io.github.nostra.mcalert.config;
     exports io.github.nostra.mcalert.model;
     exports io.github.nostra.mcalert.tray;
+    exports io.github.nostra.mcalert.fxapp;
     exports io.github.nostra.mcalert;
 }

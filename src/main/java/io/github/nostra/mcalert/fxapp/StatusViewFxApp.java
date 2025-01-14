@@ -18,6 +18,7 @@ public class StatusViewFxApp extends Application {
     private Scene scene;
     private Stage stage;
 
+    /// Launch FX app
     public void startFxApp() {
         launch();
     }
@@ -28,9 +29,18 @@ public class StatusViewFxApp extends Application {
         stage.setTitle("Web View");
         scene = new Scene(new Browser(),750,500, Color.web("#666970"));
         stage.setScene(scene);
-        show();
+        //show();
         //scene.getStylesheets().add("webviewsample/BrowserToolbar.css");
 
+    }
+
+    @Override
+    public void stop() throws Exception {
+        log.info("Stop called");
+        super.stop();
+        Platform.runLater(() -> {
+            stage.hide();
+        });
     }
 
     public void show() {
