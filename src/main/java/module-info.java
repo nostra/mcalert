@@ -12,6 +12,7 @@ module io.github.nostra.mcalert {
     requires smallrye.config.core;
     requires javafx.web;
     requires java.desktop;
+    requires javafx.controls;
 
     opens io.github.nostra.mcalert;
 
@@ -19,6 +20,6 @@ module io.github.nostra.mcalert {
     exports io.github.nostra.mcalert.config;
     exports io.github.nostra.mcalert.model;
     exports io.github.nostra.mcalert.tray;
-    exports io.github.nostra.mcalert.fxapp;
+
     exports io.github.nostra.mcalert;
 }

@@ -17,6 +17,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -194,7 +195,7 @@ public class SingleEndpointPoller {
     /// will later be presented as a popup
     public void outputStatus() {
         log.info("Ignoring: {}", namesToIgnore);
-        log.info("Also ignoring watchdog alerts: {} ", namesToIgnore);
+        log.info("Also ignoring watchdog alerts: {} ", watchdogAlertNames);
         firing.values().forEach(fire -> log.info("==> {}",fire));
 
         /*
@@ -206,4 +207,13 @@ public class SingleEndpointPoller {
 */
     }
 
+    public List<String> ignoredAlerts() {
+        return Stream.concat(namesToIgnore.stream(), watchdogAlertNames.stream())
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    public List<FiringAlertMeta> firingAlerts() {
+        return new ArrayList<>(firing.values());
+    }
 }

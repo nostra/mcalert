@@ -33,6 +33,7 @@ public class Main implements QuarkusApplication, Runnable {
             return;
         }
 
+        new Thread(() -> StatusWindow.doIt()).start();
         Semaphore mutex =  mcService.execute();
         try {
             logger.info("Execute done, now block for exit");

@@ -1,13 +1,14 @@
 package io.github.nostra.mcalert.tray;
 
+import io.github.nostra.mcalert.StatusWindow;
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.exception.McException;
-import io.github.nostra.mcalert.fxapp.StatusViewFxApp;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.Shutdown;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import javafx.application.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,7 @@ public class PrometheusTray {
     private boolean running = false;
 
     private final AlertResource alertResource;
-    private StatusViewFxApp statusViewFxApp = null;
+    private StatusWindow statusViewFxApp = null;
 
     @Inject
     public PrometheusTray( AlertResource alertResource) {
@@ -51,9 +52,9 @@ public class PrometheusTray {
             noAccessImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/prohibited-line.png")));
             deactivatedImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/information-off-line.png")));
 
-            statusViewFxApp = new StatusViewFxApp();
-            new Thread(() -> statusViewFxApp.startFxApp()).start();
-            alertResource.setStatusViewFxApp(statusViewFxApp);
+            statusViewFxApp = new StatusWindow();
+           //  new Thread(() -> statusViewFxApp.doIt());
+            //alertResource.setStatusWindow(statusViewFxApp);
 
         } catch (IOException e) {
             throw new McException("Could not initialize", e);
@@ -103,12 +104,18 @@ public class PrometheusTray {
 
     private PopupMenu constructTrayMenu() {
         var menuItems = new ArrayList<MenuItem>();
-        var refreshItem = new MenuItem("refresh");
-        refreshItem.addActionListener(e -> {
-            logger.debug("Menuitem triggered, force refresh");
-            callAndRefreshIcon();
+        MenuItem detailWindow = new MenuItem("Show Window");
+        detailWindow.addActionListener(e -> {
+            Platform.runLater(() -> {
+                if ( StatusWindow.getInstance() == null) {
+                    logger.error("Whut - null statuswindow");
+                } else {
+                    StatusWindow.getInstance().show(alertResource);
+                }
+            });
         });
-        menuItems.add( refreshItem );
+        menuItems.add(detailWindow);
+
         alertResource.map().forEach((key, value) -> {
             AlertMenuItem item = new AlertMenuItem(key);
             value.addPropertyChangeListener(item);
@@ -118,6 +125,14 @@ public class PrometheusTray {
             });
             menuItems.add(item);
         });
+
+        var refreshItem = new MenuItem("refresh");
+        refreshItem.addActionListener(e -> {
+            logger.debug("Menuitem triggered, force refresh");
+            callAndRefreshIcon();
+        });
+        menuItems.add( refreshItem );
+
         var exitItem = new MenuItem("Exit");
         exitItem.addActionListener(_ -> {
             logger.info("Exit chosen, platform exit");

@@ -10,7 +10,6 @@ import static io.github.nostra.mcalert.client.EndpointCallEnum.SUCCESS;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.UNKNOWN_FAILURE;
 import io.github.nostra.mcalert.config.AlertEndpointConfig;
 import io.github.nostra.mcalert.exception.McConfigurationException;
-import io.github.nostra.mcalert.fxapp.StatusViewFxApp;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotAllowedException;
@@ -30,7 +29,6 @@ public class AlertResource {
     private final AlertEndpointConfig alertEndpointConfig;
 
     private Map<String, SingleEndpointPoller> alertEndpointMap;
-    private StatusViewFxApp statusViewFxApp;
 
     public AlertResource(AlertEndpointConfig alertEndpointConfig) {
         this.alertEndpointConfig = alertEndpointConfig;
@@ -117,10 +115,5 @@ public class AlertResource {
         SingleEndpointPoller sep = alertEndpointMap.get(key);
         sep.toggleActive();
         sep.outputStatus();
-        statusViewFxApp.show();
-    }
-
-    public void setStatusViewFxApp(StatusViewFxApp statusViewFxApp) {
-        this.statusViewFxApp = statusViewFxApp;
     }
 }
