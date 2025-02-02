@@ -1,21 +1,23 @@
 package io.github.nostra.mcalert;
 
 import io.github.nostra.mcalert.client.AlertResource;
+import io.github.nostra.mcalert.client.SingleEndpointPoller;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 public class StatusWindow extends Application {
     private static final Logger logger = LoggerFactory.getLogger(StatusWindow.class);
@@ -29,6 +31,7 @@ public class StatusWindow extends Application {
     public static StatusWindow getInstance() {
         return instance;
     }
+
     public static class Item implements Comparable<Item> {
         private String name;
         private boolean selected;
@@ -58,11 +61,11 @@ public class StatusWindow extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        logger.info("STarting status window");
+        logger.info("Starting status window");
         instance = this;
         this.primaryStage = primaryStage;
         Platform.setImplicitExit(false);
-        primaryStage.setTitle("Toggleable List");
+        primaryStage.setTitle("Firing alerts");
     }
 
     public void show(AlertResource alertResource) {
@@ -78,39 +81,35 @@ public class StatusWindow extends Application {
     }
 
     private void createAndShowGUI(AlertResource alertResource) {
-        alertResource.map().keySet().stream().sorted().forEach(key -> logger.info("Need to create tab for "+key));
+        TabPane tabPane = new TabPane();
 
-        ObservableList<Item> items = FXCollections.observableArrayList();
-        alertResource.map()
-                .keySet()
-                .stream()
-                .filter(key -> alertResource.map().get(key).isActive()) // TODO want separate lists
-                // The map entry below is just to create a tuple
-                .map(key -> Map.entry( alertResource.map().get(key).ignoredAlerts(), alertResource.map().get(key).firingAlerts()))
-                .forEach( entry -> {
-                    var ignored = entry.getKey();
-                    entry.getValue()
-                            .stream()
-                            .map(firing -> new Item(firing.name(), ignored.contains(firing.name())))
-                            .sorted()
-                            .forEach(items::add);
-                });
+        alertResource.map().forEach((key, singleEndpointPoller) -> {
+            final Tab tab = new Tab(key);
+            tab.setClosable(false);
+            ObservableList<Item> items = FXCollections.observableArrayList();
+            singleEndpointPoller.firingAlerts().forEach(firing -> {
+                boolean isIgnored = singleEndpointPoller.ignoredAlerts().contains(firing.name());
+                items.add(new Item(firing.name(), isIgnored));
+            });
 
-        Scene scene = createScene(items);
+            ListView<Item> listView = createListView(singleEndpointPoller, items);
+            VBox vbox = new VBox();
+            vbox.getChildren().add(new Label("Checked alerts are ignored:"));
+            vbox.getChildren().add(listView);
+            tab.setContent(vbox);
+            tabPane.getTabs().add(tab);
+        });
 
+        Scene scene = new Scene(tabPane, 300, 250);
         primaryStage.setScene(scene);
-
-
-        // Show the stage (window)
         primaryStage.show();
     }
-
-    private static Scene createScene(ObservableList<Item> items) {
+    private ListView<Item> createListView(SingleEndpointPoller sep, ObservableList<Item> items) {
         ListView<Item> listView = new ListView<>(items);
-        listView.setCellFactory(new Callback<ListView<Item>, ListCell<Item>>() {
+        listView.setCellFactory(new Callback<>() {
             @Override
             public ListCell<Item> call(ListView<Item> param) {
-                return new ListCell<Item>() {
+                return new ListCell<>() {
                     @Override
                     protected void updateItem(Item item, boolean empty) {
                         super.updateItem(item, empty);
@@ -121,8 +120,10 @@ public class StatusWindow extends Application {
                             CheckBox checkBox = new CheckBox(item.getName());
                             checkBox.setSelected(item.isSelected());
                             checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-                                item.setSelected(newVal);
-                                logger.info("Toggle called on "+item.name);
+                                // Only allowing toggle on non-watchdog alerts
+                                if ( sep.toggleIgnoreOn( item.name )) {
+                                    item.setSelected(newVal);
+                                }
                             });
                             setGraphic(checkBox);
                         }
@@ -130,10 +131,6 @@ public class StatusWindow extends Application {
                 };
             }
         });
-
-        VBox root = new VBox(listView);
-        Scene scene = new Scene(root, 300, 250);
-        return scene;
+        return listView;
     }
-
 }

@@ -216,4 +216,17 @@ public class SingleEndpointPoller {
     public List<FiringAlertMeta> firingAlerts() {
         return new ArrayList<>(firing.values());
     }
+
+    public boolean toggleIgnoreOn(String name) {
+        if ( watchdogAlertNames.contains(name)) {
+            log.error("Disallowing to toggle of watchdog alert");
+            return false;
+        }
+        if ( namesToIgnore.contains(name)) {
+            namesToIgnore.remove(name);
+        } else {
+            namesToIgnore.add(name);
+        }
+        return true;
+    }
 }
