@@ -29,7 +29,7 @@ public class StatusWindow extends Application {
     public static StatusWindow getInstance() {
         return instance;
     }
-    public static class Item {
+    public static class Item implements Comparable<Item> {
         private String name;
         private boolean selected;
 
@@ -49,6 +49,11 @@ public class StatusWindow extends Application {
         public void setSelected(boolean selected) {
             this.selected = selected;
         }
+
+        @Override
+        public int compareTo(Item other) {
+            return name.compareTo(other.name);
+        }
     }
 
     @Override
@@ -63,30 +68,44 @@ public class StatusWindow extends Application {
     public void show(AlertResource alertResource) {
         Platform.runLater(() -> {
             if (primaryStage.isShowing()) {
+                logger.info("Bring to front");
                 primaryStage.toFront(); // Bring to front if already visible
             } else {
+                logger.info("Create and show");
                 createAndShowGUI(alertResource);
             }
         });
     }
 
     private void createAndShowGUI(AlertResource alertResource) {
+        alertResource.map().keySet().stream().sorted().forEach(key -> logger.info("Need to create tab for "+key));
+
         ObservableList<Item> items = FXCollections.observableArrayList();
         alertResource.map()
                 .keySet()
                 .stream()
                 .filter(key -> alertResource.map().get(key).isActive()) // TODO want separate lists
-                .sorted()
+                // The map entry below is just to create a tuple
                 .map(key -> Map.entry( alertResource.map().get(key).ignoredAlerts(), alertResource.map().get(key).firingAlerts()))
                 .forEach( entry -> {
                     var ignored = entry.getKey();
                     entry.getValue()
                             .stream()
-                            .forEach(firing ->
-                                    items.add(new Item(firing.name(), ignored.contains(firing.name())) )
-                            );
+                            .map(firing -> new Item(firing.name(), ignored.contains(firing.name())))
+                            .sorted()
+                            .forEach(items::add);
                 });
 
+        Scene scene = createScene(items);
+
+        primaryStage.setScene(scene);
+
+
+        // Show the stage (window)
+        primaryStage.show();
+    }
+
+    private static Scene createScene(ObservableList<Item> items) {
         ListView<Item> listView = new ListView<>(items);
         listView.setCellFactory(new Callback<ListView<Item>, ListCell<Item>>() {
             @Override
@@ -103,6 +122,7 @@ public class StatusWindow extends Application {
                             checkBox.setSelected(item.isSelected());
                             checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                                 item.setSelected(newVal);
+                                logger.info("Toggle called on "+item.name);
                             });
                             setGraphic(checkBox);
                         }
@@ -113,14 +133,7 @@ public class StatusWindow extends Application {
 
         VBox root = new VBox(listView);
         Scene scene = new Scene(root, 300, 250);
-
-        // Set the scene only if it hasn't been set before to avoid exceptions
-        if (primaryStage.getScene() == null) {
-            primaryStage.setScene(scene);
-        }
-
-        // Show the stage (window)
-        primaryStage.show();
+        return scene;
     }
 
 }

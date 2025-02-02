@@ -105,15 +105,13 @@ public class PrometheusTray {
     private PopupMenu constructTrayMenu() {
         var menuItems = new ArrayList<MenuItem>();
         MenuItem detailWindow = new MenuItem("Show Window");
-        detailWindow.addActionListener(e -> {
-            Platform.runLater(() -> {
-                if ( StatusWindow.getInstance() == null) {
-                    logger.error("Whut - null statuswindow");
-                } else {
-                    StatusWindow.getInstance().show(alertResource);
-                }
-            });
-        });
+        detailWindow.addActionListener(_ -> Platform.runLater(() -> {
+            if ( StatusWindow.getInstance() == null) {
+                logger.error("Whut - null statuswindow??");
+            } else {
+                StatusWindow.getInstance().show(alertResource);
+            }
+        }));
         menuItems.add(detailWindow);
 
         alertResource.map().forEach((key, value) -> {
