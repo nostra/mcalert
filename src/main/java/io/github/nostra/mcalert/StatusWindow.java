@@ -19,6 +19,8 @@ import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+
 public class StatusWindow extends Application {
     private static final Logger logger = LoggerFactory.getLogger(StatusWindow.class);
     private static StatusWindow instance;
@@ -35,10 +37,12 @@ public class StatusWindow extends Application {
     public static class Item implements Comparable<Item> {
         private String name;
         private boolean selected;
+        private long seenSecondsAgo;
 
-        public Item(String name, boolean selected) {
+        public Item(String name, boolean selected, long seenSecondsAgo) {
             this.name = name;
             this.selected = selected;
+            this.seenSecondsAgo = seenSecondsAgo;
         }
 
         public String getName() {
@@ -56,6 +60,14 @@ public class StatusWindow extends Application {
         @Override
         public int compareTo(Item other) {
             return name.compareTo(other.name);
+        }
+
+        public long getSeenSecondsAgo() {
+            return seenSecondsAgo;
+        }
+
+        public void setSeenSecondsAgo(long seenSecondsAgo) {
+            this.seenSecondsAgo = seenSecondsAgo;
         }
     }
 
@@ -89,10 +101,11 @@ public class StatusWindow extends Application {
             ObservableList<Item> items = FXCollections.observableArrayList();
             singleEndpointPoller.firingAlerts().forEach(firing -> {
                 boolean isIgnored = singleEndpointPoller.ignoredAlerts().contains(firing.name());
-                items.add(new Item(firing.name(), isIgnored));
+                long seenSecondsAgo = Instant.now().getEpochSecond()-firing.lastSeen().getEpochSecond();
+                items.add(new Item(firing.name(), isIgnored, seenSecondsAgo));
             });
 
-            ListView<Item> listView = createListView(singleEndpointPoller, items);
+            ListView<Item> listView = createListView(singleEndpointPoller, items.sorted());
             VBox vbox = new VBox();
             vbox.getChildren().add(new Label("Checked alerts are ignored:"));
             vbox.getChildren().add(listView);
@@ -121,11 +134,23 @@ public class StatusWindow extends Application {
                             checkBox.setSelected(item.isSelected());
                             checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                                 // Only allowing toggle on non-watchdog alerts
+                                item.setSeenSecondsAgo(0);
                                 if ( sep.toggleIgnoreOn( item.name )) {
                                     item.setSelected(newVal);
                                 }
                             });
                             setGraphic(checkBox);
+                            if (item.getSeenSecondsAgo() > 500) {
+                                // Flaky logic, it does not update the items
+                                int maxSeconds = 5000;
+                                int seenSecondsAgo = Math.min((int)item.getSeenSecondsAgo(), 5000);
+                                int greenIntensity = 255 - (seenSecondsAgo * 255 / maxSeconds);
+                                String color = String.format("rgb(0, %d, 0)", greenIntensity);
+                                checkBox.setStyle("-fx-background-color: " + color + ";");
+                                //checkBox.setStyle("-fx-background-color: lightgreen;");
+                            } else {
+                                checkBox.setStyle("-fx-background-color: white;");
+                            }
                         }
                     }
                 };
