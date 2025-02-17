@@ -101,7 +101,9 @@ public class StatusWindow extends Application {
             ObservableList<Item> items = FXCollections.observableArrayList();
             singleEndpointPoller.firingAlerts().forEach(firing -> {
                 boolean isIgnored = singleEndpointPoller.ignoredAlerts().contains(firing.name());
-                long seenSecondsAgo = Instant.now().getEpochSecond()-firing.lastSeen().getEpochSecond();
+                long seenSecondsAgo = firing.lastSeen() == null
+                        ? 0
+                        : Instant.now().getEpochSecond()-firing.lastSeen().getEpochSecond();
                 items.add(new Item(firing.name(), isIgnored, seenSecondsAgo));
             });
 
