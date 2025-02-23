@@ -146,7 +146,7 @@ public class StatusWindow extends Application {
                                 // Flaky logic, it does not update the items
                                 int maxSeconds = 5000;
                                 int seenSecondsAgo = Math.min((int)item.getSeenSecondsAgo(), 5000);
-                                int greenIntensity = 255 - (seenSecondsAgo * 255 / maxSeconds);
+                                int greenIntensity = Math.max( 255 - (seenSecondsAgo * 255 / maxSeconds), 75);
                                 String color = String.format("rgb(0, %d, 0)", greenIntensity);
                                 checkBox.setStyle("-fx-background-color: " + color + ";");
                                 //checkBox.setStyle("-fx-background-color: lightgreen;");
