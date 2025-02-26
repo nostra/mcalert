@@ -129,30 +129,47 @@ public class StatusWindow extends Application {
                     protected void updateItem(Item item, boolean empty) {
                         super.updateItem(item, empty);
                         if (empty || item == null) {
-                            setText(null);
-                            setGraphic(null);
+                            clearCell();
                         } else {
-                            CheckBox checkBox = new CheckBox(item.getName());
-                            checkBox.setSelected(item.isSelected());
-                            checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-                                // Only allowing toggle on non-watchdog alerts
-                                item.setSeenSecondsAgo(0);
-                                if ( sep.toggleIgnoreOn( item.name )) {
-                                    item.setSelected(newVal);
-                                }
-                            });
-                            setGraphic(checkBox);
-                            if (item.getSeenSecondsAgo() > 500) {
-                                // Flaky logic, it does not update the items
-                                int maxSeconds = 5000;
-                                int seenSecondsAgo = Math.min((int)item.getSeenSecondsAgo(), 5000);
-                                int greenIntensity = Math.max( 255 - (seenSecondsAgo * 255 / maxSeconds), 75);
-                                String color = String.format("rgb(0, %d, 0)", greenIntensity);
-                                checkBox.setStyle("-fx-background-color: " + color + ";");
-                                //checkBox.setStyle("-fx-background-color: lightgreen;");
-                            } else {
-                                checkBox.setStyle("-fx-background-color: white;");
+                            updateNonEmptyItem(item);
+                        }
+                    }
+
+                    private void clearCell() {
+                        setText(null);
+                        setGraphic(null);
+                    }
+
+                    private void updateNonEmptyItem(Item item) {
+                        CheckBox checkBox = createCheckBox(item);
+                        setupCheckBoxListener(checkBox, item);
+                        setGraphic(checkBox);
+                        applyAgeBasedStyle(checkBox, item);
+                    }
+
+                    private CheckBox createCheckBox(Item item) {
+                        CheckBox checkBox = new CheckBox(item.getName());
+                        checkBox.setSelected(item.isSelected());
+                        return checkBox;
+                    }
+
+                    private void setupCheckBoxListener(CheckBox checkBox, Item item) {
+                        checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                            item.setSeenSecondsAgo(0);
+                            if (sep.toggleIgnoreOn(item.name)) {
+                                item.setSelected(newVal);
                             }
+                        });
+                    }
+
+                    private void applyAgeBasedStyle(CheckBox checkBox, Item item) {
+                        if (item.getSeenSecondsAgo() > 500) {
+                            int maxSeconds = 5000;
+                            int seenSecondsAgo = Math.min((int)item.getSeenSecondsAgo(), maxSeconds);
+                            int greenIntensity = Math.max(255 - (seenSecondsAgo * 255 / maxSeconds), 75);
+                            checkBox.setStyle(String.format("-fx-background-color: rgb(0, %d, 0);", greenIntensity));
+                        } else {
+                            checkBox.setStyle("-fx-background-color: white;");
                         }
                     }
                 };
