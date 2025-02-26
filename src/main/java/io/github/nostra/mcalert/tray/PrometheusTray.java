@@ -1,5 +1,13 @@
 package io.github.nostra.mcalert.tray;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.concurrent.Semaphore;
+
 import io.github.nostra.mcalert.StatusWindow;
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.exception.McException;
@@ -11,14 +19,6 @@ import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.concurrent.Semaphore;
 
 @Singleton
 public class PrometheusTray {
@@ -116,6 +116,7 @@ public class PrometheusTray {
 
         alertResource.map().forEach((key, value) -> {
             AlertMenuItem item = new AlertMenuItem(key);
+            value.setResourceKey( key );
             value.addPropertyChangeListener(item);
             item.addActionListener(e -> {
                 logger.info("Event is: {}", e);

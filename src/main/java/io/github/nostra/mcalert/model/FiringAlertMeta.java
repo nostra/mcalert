@@ -4,12 +4,14 @@ import java.time.Instant;
 
 /// Retain meta data for a single alert
 public record FiringAlertMeta(
+        String resourceKey,
         String name,
         int numberOfAlerts,
-        Instant lastSeen
+        Instant lastSeen,
+        AlertType alertType
         ) {
     public FiringAlertMeta increment() {
-        return new FiringAlertMeta(name, numberOfAlerts+1,Instant.now());
+        return new FiringAlertMeta(resourceKey, name, numberOfAlerts + 1, Instant.now(), alertType);
     }
     // Consider info about disable
     /*

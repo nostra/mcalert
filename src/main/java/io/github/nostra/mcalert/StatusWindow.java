@@ -1,5 +1,7 @@
 package io.github.nostra.mcalert;
 
+import java.time.Instant;
+
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.client.SingleEndpointPoller;
 import javafx.application.Application;
@@ -18,8 +20,6 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
 
 public class StatusWindow extends Application {
     private static final Logger logger = LoggerFactory.getLogger(StatusWindow.class);
@@ -128,16 +128,9 @@ public class StatusWindow extends Application {
                     @Override
                     protected void updateItem(Item item, boolean empty) {
                         super.updateItem(item, empty);
-                        if (empty || item == null) {
-                            clearCell();
-                        } else {
+                        if (item != null) {
                             updateNonEmptyItem(item);
                         }
-                    }
-
-                    private void clearCell() {
-                        setText(null);
-                        setGraphic(null);
                     }
 
                     private void updateNonEmptyItem(Item item) {
@@ -150,6 +143,9 @@ public class StatusWindow extends Application {
                     private CheckBox createCheckBox(Item item) {
                         CheckBox checkBox = new CheckBox(item.getName());
                         checkBox.setSelected(item.isSelected());
+                        if (sep.isWatchDogAlert(item.getName())) {
+                            checkBox.setDisable(true);
+                        }
                         return checkBox;
                     }
 
@@ -163,7 +159,7 @@ public class StatusWindow extends Application {
                     }
 
                     private void applyAgeBasedStyle(CheckBox checkBox, Item item) {
-                        if (item.getSeenSecondsAgo() > 500) {
+                        if (item.getSeenSecondsAgo() > 10) { // TODO Revert to 500 later
                             int maxSeconds = 5000;
                             int seenSecondsAgo = Math.min((int)item.getSeenSecondsAgo(), maxSeconds);
                             int greenIntensity = Math.max(255 - (seenSecondsAgo * 255 / maxSeconds), 75);
