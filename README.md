@@ -127,6 +127,16 @@ Open http://localhost:9090/
 
 ## Icons
 
+### Application Icon
+
+```
+resvg --width 512 --height 512 mcalert-icon-512.svg mcalert-icon-512.png
+open mcalert-icon-512.png
+```
+
+Choose to export it as icns file.
+
+### Status Icons
 Icons downloaded from
 - https://remixicon.com/icon/cloud-off-fill
 - https://remixicon.com/icon/bug-line
