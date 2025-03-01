@@ -1,22 +1,12 @@
 package io.github.nostra.mcalert.client;
 
-import io.github.nostra.mcalert.config.AlertEndpointConfig;
-import io.github.nostra.mcalert.model.AlertModel;
-import io.github.nostra.mcalert.model.FiringAlertMeta;
-import io.github.nostra.mcalert.model.GrafanaDatasource;
-import io.github.nostra.mcalert.model.PrometheusData;
-import io.github.nostra.mcalert.model.PrometheusResult;
-import jakarta.ws.rs.client.ClientRequestFilter;
-import org.eclipse.microprofile.rest.client.RestClientBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +16,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.github.nostra.mcalert.config.AlertEndpointConfig;
+import io.github.nostra.mcalert.model.AlertModel;
+import io.github.nostra.mcalert.model.AlertType;
+import io.github.nostra.mcalert.model.FiringAlertMeta;
+import io.github.nostra.mcalert.model.GrafanaDatasource;
+import io.github.nostra.mcalert.model.PrometheusData;
+import io.github.nostra.mcalert.model.PrometheusResult;
+import jakarta.ws.rs.client.ClientRequestFilter;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SingleEndpointPoller {
     private static final Logger log = LoggerFactory.getLogger(SingleEndpointPoller.class);
@@ -37,10 +39,10 @@ public class SingleEndpointPoller {
      * Watchdog alerts are alerts that should fire, if they don't there is an error.
      */
     private final List<String> watchdogAlertNames;
-    private int numAlerts = -42;
     private boolean active = true;
     private Map<String, FiringAlertMeta> firing = new HashMap<>();
-
+    private FiringAlertMeta[] firingAlerts = new FiringAlertMeta[0];
+    private String resourceKey;
 
     public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config, AlertCaller caller) {
         this.caller = caller;
@@ -52,7 +54,7 @@ public class SingleEndpointPoller {
         // Iterate over the union set and add each item to the firing hashmap in order to see which that never fires
         Stream.concat(watchdogAlertNames.stream(), namesToIgnore.stream())
                 .forEach(alertName -> firing
-                        .putIfAbsent(alertName, new FiringAlertMeta(alertName, 0, null)));
+                        .putIfAbsent(alertName, new FiringAlertMeta(resourceKey,alertName, 0, null, AlertType.INACTIVE)));
     }
 
     public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config) {
@@ -73,39 +75,55 @@ public class SingleEndpointPoller {
     /**
      * @return Return value is filtered for watchdog and irrelevant alerts
      */
-    public PrometheusResult callPrometheus(String name) {
+    public PrometheusResult callPrometheus(String resourceKeyAsParam) {
         if (!active) {
-            return new PrometheusResult("success", new PrometheusData(Collections.emptyList()), name);
+            firingAlerts = new FiringAlertMeta[]{new FiringAlertMeta(resourceKey, resourceKeyAsParam, 0, Instant.now(), AlertType.DEACTIVATED)};
+            pcs.firePropertyChange("firingAlerts", null, firingAlerts);
+            return new PrometheusResult("success", new PrometheusData(Collections.emptyList()), resourceKeyAsParam);
         }
 
         try {
-            PrometheusResult result = caller.callPrometheus().addName(name);
-            updateFiringMapWith( result.data().alerts() );
+            PrometheusResult result = caller.callPrometheus().addName(resourceKeyAsParam);
+            updateFiringMapWith(result.data().alerts());
             List<AlertModel> toRemove = extractIrrelevantAlerts(result);
             result.data().alerts().removeAll(toRemove);
             ensureWatchdogPresence(result, toRemove);
 
-            int current = result.noAlerts() ? 0 : result.data().alerts().size();
+            List<FiringAlertMeta> currentAlerts = result.data().alerts().stream()
+                    .map(alert -> new FiringAlertMeta(
+                            resourceKey,
+                            alert.alertName(),
+                            1,
+                            Instant.now(),
+                            AlertType.ACTIVE))
+                    .collect(Collectors.toList());
 
-            log.trace("Calling api endpoint for configuration {}. Got {} alerts", name, current);
+            if (currentAlerts.isEmpty()) {
+                currentAlerts.add(new FiringAlertMeta(resourceKey,resourceKeyAsParam, 0, Instant.now(), AlertType.INACTIVE));
+            }
 
-            pcs.firePropertyChange("numAlerts", numAlerts, current);
-            if ( numAlerts != current && current >0 ) {
-                // Just log changed alerts for the moment. Note that it would not fire if one alert were exchanged with another...
-                log.debug("New alert(s) triggered: {}",
-                        result.data()
-                                .alerts()
-                                .stream()
-                                .flatMap(a -> a.labels().entrySet().stream())
-                                .filter(map -> map.getKey().equals("alertname"))
-                                .map(Map.Entry::getValue)
+            FiringAlertMeta[] newFiringAlerts = currentAlerts.toArray(new FiringAlertMeta[0]);
+            log.trace("Calling api endpoint for configuration {}. Got {} alerts", resourceKeyAsParam, currentAlerts.size());
+
+            pcs.firePropertyChange("firingAlerts", firingAlerts, newFiringAlerts);
+            if (firingAlerts.length != newFiringAlerts.length ) {
+                // TODO Edge case when one firing alert is replaced with another
+                log.debug("New alert(s) triggered: {}", 
+                        currentAlerts.stream()
+                                .map(fam -> fam.resourceKey() + "." + fam.name()+"."+fam.alertType().name())
+                                .peek(aname -> {
+                                    if ( aname == null ) {
+                                        log.error("MISSING NAME. Current alerts: "+currentAlerts);
+                                    }
+                                })
                                 .collect(Collectors.toSet()));
             }
-            numAlerts = current;
+            firingAlerts = newFiringAlerts;
             return result;
         } catch (Exception e) {
-            pcs.firePropertyChange("numAlerts", numAlerts, -2);
-            numAlerts = -2;
+            FiringAlertMeta[] errorAlerts = {new FiringAlertMeta(resourceKey, resourceKeyAsParam, -2, Instant.now(), AlertType.INACTIVE)};
+            pcs.firePropertyChange("firingAlerts", firingAlerts, errorAlerts);
+            firingAlerts = errorAlerts;
             throw e;
         }
     }
@@ -117,9 +135,11 @@ public class SingleEndpointPoller {
                     FiringAlertMeta fam = firing.get(am.alertName());
                     if ( fam == null ) {
                         fam = new FiringAlertMeta(
+                                resourceKey,
                                 am.alertName(),
                                 1,
-                                Instant.now()
+                                Instant.now(),
+                                AlertType.ACTIVE
                         );
                     } else {
                         fam = fam.increment();
@@ -138,8 +158,16 @@ public class SingleEndpointPoller {
 
     public void toggleActive() {
         active = !active;
-        pcs.firePropertyChange("numAlerts", numAlerts, -666);
-        numAlerts = -666;
+        FiringAlertMeta[] deactivatedAlerts = firing.values().stream()
+                .map(alert -> new FiringAlertMeta(
+                        resourceKey,
+                        alert.name(),
+                        alert.numberOfAlerts(),
+                        Instant.now(),
+                        AlertType.DEACTIVATED))
+                .toArray(FiringAlertMeta[]::new);
+        pcs.firePropertyChange("firingAlerts", firingAlerts, deactivatedAlerts);
+        firingAlerts = deactivatedAlerts;
     }
 
     private void ensureWatchdogPresence(PrometheusResult result, List<AlertModel> toRemove) {
@@ -176,7 +204,12 @@ public class SingleEndpointPoller {
         Map<String, AlertModel> watchDogAlerts = new HashMap<>();
         toRemove.stream().filter(alertModel -> "firing".equals(alertModel.state())).filter(alertModel -> watchdogAlertNames.contains(alertModel.alertName())).forEach(alertModel -> watchDogAlerts.putIfAbsent(alertModel.alertName(), alertModel));
         if (watchDogAlerts.size() != watchdogAlertNames.size()) {
-            return watchdogAlertNames.stream().filter(name -> !watchDogAlerts.containsKey(name)).map(name -> new AlertModel(Collections.emptyMap(), Map.of("alertName", name), "missing", ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT), 1L)).toList();
+            return watchdogAlertNames.stream()
+                    .filter(name -> !watchDogAlerts.containsKey(name))
+                    .map(name -> new AlertModel(Collections.emptyMap(),
+                            Map.of("alertname", name), "missing",
+                            ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT), 1L))
+                    .toList();
         }
         return Collections.emptyList();
     }
@@ -194,7 +227,41 @@ public class SingleEndpointPoller {
     /// will later be presented as a popup
     public void outputStatus() {
         log.info("Ignoring: {}", namesToIgnore);
-        log.info("Also ignoring watchdog alerts: {} ", namesToIgnore);
+        log.info("Also ignoring watchdog alerts: {} ", watchdogAlertNames);
         firing.values().forEach(fire -> log.info("==> {}",fire));
+    }
+
+    ///  Union of alerts to ignore and watchdog alerts
+    public List<String> ignoredAlerts() {
+        return Stream.concat(namesToIgnore.stream(), watchdogAlertNames.stream())
+                .sorted()
+                .toList();
+    }
+
+    public List<FiringAlertMeta> firingAlerts() {
+        return new ArrayList<>(firing.values());
+    }
+
+    ///  @return true if alert with given name is a watchdog alert
+    public boolean isWatchDogAlert(String name) {
+        return watchdogAlertNames.contains(name);
+    }
+
+    public boolean toggleIgnoreOn(String name) {
+        if ( isWatchDogAlert(name)) {
+            // Disallowing to toggle of watchdog alert
+            return false;
+        }
+        if ( namesToIgnore.contains(name)) {
+            namesToIgnore.remove(name);
+        } else {
+            namesToIgnore.add(name);
+        }
+        return true;
+    }
+
+    ///  Set the configuration key used for this poller
+    public void setResourceKey(String resourceKey) {
+        this.resourceKey = resourceKey;
     }
 }

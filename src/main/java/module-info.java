@@ -3,7 +3,6 @@ module io.github.nostra.mcalert {
     requires info.picocli;
     requires jakarta.cdi;
     requires jakarta.ws.rs;
-    requires java.desktop;
     requires jdk.httpserver; // For testing
     requires microprofile.config.api;
     requires microprofile.rest.client.api;
@@ -11,6 +10,9 @@ module io.github.nostra.mcalert {
     requires quarkus.core;
     requires quarkus.scheduler.api;
     requires smallrye.config.core;
+    requires javafx.web;
+    requires java.desktop;
+    requires javafx.controls;
 
     opens io.github.nostra.mcalert;
 
@@ -18,5 +20,6 @@ module io.github.nostra.mcalert {
     exports io.github.nostra.mcalert.config;
     exports io.github.nostra.mcalert.model;
     exports io.github.nostra.mcalert.tray;
+
     exports io.github.nostra.mcalert;
 }
