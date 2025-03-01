@@ -75,15 +75,15 @@ public class SingleEndpointPoller {
     /**
      * @return Return value is filtered for watchdog and irrelevant alerts
      */
-    public PrometheusResult callPrometheus(String name) {
+    public PrometheusResult callPrometheus(String resourceKeyAsParam) {
         if (!active) {
-            firingAlerts = new FiringAlertMeta[]{new FiringAlertMeta(resourceKey, name, 0, Instant.now(), AlertType.DEACTIVATED)};
+            firingAlerts = new FiringAlertMeta[]{new FiringAlertMeta(resourceKey, resourceKeyAsParam, 0, Instant.now(), AlertType.DEACTIVATED)};
             pcs.firePropertyChange("firingAlerts", null, firingAlerts);
-            return new PrometheusResult("success", new PrometheusData(Collections.emptyList()), name);
+            return new PrometheusResult("success", new PrometheusData(Collections.emptyList()), resourceKeyAsParam);
         }
 
         try {
-            PrometheusResult result = caller.callPrometheus().addName(name);
+            PrometheusResult result = caller.callPrometheus().addName(resourceKeyAsParam);
             updateFiringMapWith(result.data().alerts());
             List<AlertModel> toRemove = extractIrrelevantAlerts(result);
             result.data().alerts().removeAll(toRemove);
@@ -99,18 +99,18 @@ public class SingleEndpointPoller {
                     .collect(Collectors.toList());
 
             if (currentAlerts.isEmpty()) {
-                currentAlerts.add(new FiringAlertMeta(resourceKey,name, 0, Instant.now(), AlertType.INACTIVE));
+                currentAlerts.add(new FiringAlertMeta(resourceKey,resourceKeyAsParam, 0, Instant.now(), AlertType.INACTIVE));
             }
 
             FiringAlertMeta[] newFiringAlerts = currentAlerts.toArray(new FiringAlertMeta[0]);
-            log.trace("Calling api endpoint for configuration {}. Got {} alerts", name, currentAlerts.size());
+            log.trace("Calling api endpoint for configuration {}. Got {} alerts", resourceKeyAsParam, currentAlerts.size());
 
             pcs.firePropertyChange("firingAlerts", firingAlerts, newFiringAlerts);
             if (firingAlerts.length != newFiringAlerts.length ) {
                 // TODO Edge case when one firing alert is replaced with another
                 log.debug("New alert(s) triggered: {}", 
                         currentAlerts.stream()
-                                .map(FiringAlertMeta::name)
+                                .map(fam -> fam.resourceKey() + "." + fam.name()+"."+fam.alertType().name())
                                 .peek(aname -> {
                                     if ( aname == null ) {
                                         log.error("MISSING NAME. Current alerts: "+currentAlerts);
@@ -121,7 +121,7 @@ public class SingleEndpointPoller {
             firingAlerts = newFiringAlerts;
             return result;
         } catch (Exception e) {
-            FiringAlertMeta[] errorAlerts = {new FiringAlertMeta(resourceKey, name, -2, Instant.now(), AlertType.INACTIVE)};
+            FiringAlertMeta[] errorAlerts = {new FiringAlertMeta(resourceKey, resourceKeyAsParam, -2, Instant.now(), AlertType.INACTIVE)};
             pcs.firePropertyChange("firingAlerts", firingAlerts, errorAlerts);
             firingAlerts = errorAlerts;
             throw e;
@@ -231,6 +231,7 @@ public class SingleEndpointPoller {
         firing.values().forEach(fire -> log.info("==> {}",fire));
     }
 
+    ///  Union of alerts to ignore and watchdog alerts
     public List<String> ignoredAlerts() {
         return Stream.concat(namesToIgnore.stream(), watchdogAlertNames.stream())
                 .sorted()
@@ -241,13 +242,14 @@ public class SingleEndpointPoller {
         return new ArrayList<>(firing.values());
     }
 
+    ///  @return true if alert with given name is a watchdog alert
     public boolean isWatchDogAlert(String name) {
         return watchdogAlertNames.contains(name);
     }
 
     public boolean toggleIgnoreOn(String name) {
         if ( isWatchDogAlert(name)) {
-            log.error("Disallowing to toggle of watchdog alert");
+            // Disallowing to toggle of watchdog alert
             return false;
         }
         if ( namesToIgnore.contains(name)) {
@@ -258,6 +260,7 @@ public class SingleEndpointPoller {
         return true;
     }
 
+    ///  Set the configuration key used for this poller
     public void setResourceKey(String resourceKey) {
         this.resourceKey = resourceKey;
     }

@@ -102,7 +102,7 @@ public class StatusWindow extends Application {
             singleEndpointPoller.firingAlerts().forEach(firing -> {
                 boolean isIgnored = singleEndpointPoller.ignoredAlerts().contains(firing.name());
                 long seenSecondsAgo = firing.lastSeen() == null
-                        ? 0
+                        ? 50_000
                         : Instant.now().getEpochSecond()-firing.lastSeen().getEpochSecond();
                 items.add(new Item(firing.name(), isIgnored, seenSecondsAgo));
             });
@@ -159,7 +159,12 @@ public class StatusWindow extends Application {
                     }
 
                     private void applyAgeBasedStyle(CheckBox checkBox, Item item) {
-                        if (item.getSeenSecondsAgo() > 10) { // TODO Revert to 500 later
+                        if (item.getSeenSecondsAgo() > 40_000) {
+                            checkBox.setStyle("""
+                                -fx-background-color: rgb(255, 204, 203);
+                                -fx-strikethrough: true;
+                                """.stripIndent());
+                        } else if (item.getSeenSecondsAgo() > 10) {
                             int maxSeconds = 5000;
                             int seenSecondsAgo = Math.min((int)item.getSeenSecondsAgo(), maxSeconds);
                             int greenIntensity = Math.max(255 - (seenSecondsAgo * 255 / maxSeconds), 75);
