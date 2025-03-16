@@ -1,5 +1,18 @@
 package io.github.nostra.mcalert.client;
 
+import io.github.nostra.mcalert.MaclertTab;
+import io.github.nostra.mcalert.config.AlertEndpointConfig;
+import io.github.nostra.mcalert.model.AlertModel;
+import io.github.nostra.mcalert.model.AlertType;
+import io.github.nostra.mcalert.model.FiringAlertMeta;
+import io.github.nostra.mcalert.model.GrafanaDatasource;
+import io.github.nostra.mcalert.model.PrometheusData;
+import io.github.nostra.mcalert.model.PrometheusResult;
+import jakarta.ws.rs.client.ClientRequestFilter;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URI;
@@ -17,18 +30,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.github.nostra.mcalert.config.AlertEndpointConfig;
-import io.github.nostra.mcalert.model.AlertModel;
-import io.github.nostra.mcalert.model.AlertType;
-import io.github.nostra.mcalert.model.FiringAlertMeta;
-import io.github.nostra.mcalert.model.GrafanaDatasource;
-import io.github.nostra.mcalert.model.PrometheusData;
-import io.github.nostra.mcalert.model.PrometheusResult;
-import jakarta.ws.rs.client.ClientRequestFilter;
-import org.eclipse.microprofile.rest.client.RestClientBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class SingleEndpointPoller {
     private static final Logger log = LoggerFactory.getLogger(SingleEndpointPoller.class);
 
@@ -43,6 +44,8 @@ public class SingleEndpointPoller {
     private Map<String, FiringAlertMeta> firing = new HashMap<>();
     private FiringAlertMeta[] firingAlerts = new FiringAlertMeta[0];
     private String resourceKey;
+    /// Tab is the tab pane the alert belongs to
+    private MaclertTab tab;
 
     public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config, AlertCaller caller) {
         this.caller = caller;
@@ -106,6 +109,7 @@ public class SingleEndpointPoller {
             log.trace("Calling api endpoint for configuration {}. Got {} alerts", resourceKeyAsParam, currentAlerts.size());
 
             pcs.firePropertyChange("firingAlerts", firingAlerts, newFiringAlerts);
+            boolean toUpdate = false;
             if (firingAlerts.length != newFiringAlerts.length ) {
                 // TODO Edge case when one firing alert is replaced with another
                 log.debug("New alert(s) triggered: {}", 
@@ -117,8 +121,13 @@ public class SingleEndpointPoller {
                                     }
                                 })
                                 .collect(Collectors.toSet()));
+                toUpdate = true;
             }
             firingAlerts = newFiringAlerts;
+            if ( toUpdate && tab != null ) {
+                log.debug("Shall update tab");
+                tab.updateContentsOfTab(this);
+            }
             return result;
         } catch (Exception e) {
             FiringAlertMeta[] errorAlerts = {new FiringAlertMeta(resourceKey, resourceKeyAsParam, -2, Instant.now(), AlertType.INACTIVE)};
@@ -263,5 +272,12 @@ public class SingleEndpointPoller {
     ///  Set the configuration key used for this poller
     public void setResourceKey(String resourceKey) {
         this.resourceKey = resourceKey;
+    }
+
+    public void setTab(MaclertTab tab) {
+        if ( this.tab != null ) {
+            log.error("Inconsistency in set tab, it is called more than once.");
+        }
+        this.tab = tab;
     }
 }
