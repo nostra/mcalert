@@ -2,6 +2,7 @@ package io.github.nostra.mcalert;
 
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.client.SingleEndpointPoller;
+import io.github.nostra.mcalert.model.Item;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -34,43 +35,6 @@ public class StatusWindow extends Application {
         return instance;
     }
 
-    public static class Item implements Comparable<Item> {
-        private String name;
-        private boolean selected;
-        private long seenSecondsAgo;
-
-        public Item(String name, boolean selected, long seenSecondsAgo) {
-            this.name = name;
-            this.selected = selected;
-            this.seenSecondsAgo = seenSecondsAgo;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public boolean isSelected() {
-            return selected;
-        }
-
-        public void setSelected(boolean selected) {
-            this.selected = selected;
-        }
-
-        @Override
-        public int compareTo(Item other) {
-            return name.compareTo(other.name);
-        }
-
-        public long getSeenSecondsAgo() {
-            return seenSecondsAgo;
-        }
-
-        public void setSeenSecondsAgo(long seenSecondsAgo) {
-            this.seenSecondsAgo = seenSecondsAgo;
-        }
-    }
-
     @Override
     public void start(Stage primaryStage) {
         logger.info("Starting status window");
@@ -93,31 +57,67 @@ public class StatusWindow extends Application {
     }
 
     private void createAndShowGUI(AlertResource alertResource) {
-        TabPane tabPane = new TabPane();
+        TabPane tabPane = createTabPane();
 
-        alertResource.map().forEach((key, singleEndpointPoller) -> {
-            final Tab tab = new Tab(key);
-            tab.setClosable(false);
-            ObservableList<Item> items = FXCollections.observableArrayList();
-            singleEndpointPoller.firingAlerts().forEach(firing -> {
-                boolean isIgnored = singleEndpointPoller.ignoredAlerts().contains(firing.name());
-                long seenSecondsAgo = firing.lastSeen() == null
-                        ? 50_000
-                        : Instant.now().getEpochSecond()-firing.lastSeen().getEpochSecond();
-                items.add(new Item(firing.name(), isIgnored, seenSecondsAgo));
-            });
-
-            ListView<Item> listView = createListView(singleEndpointPoller, items.sorted());
-            VBox vbox = new VBox();
-            vbox.getChildren().add(new Label("Checked alerts are ignored:"));
-            vbox.getChildren().add(listView);
-            tab.setContent(vbox);
+        alertResource.map().forEach((endpointName, poller) -> {
+            Tab tab = createEndpointTab(endpointName, poller);
             tabPane.getTabs().add(tab);
         });
 
         Scene scene = new Scene(tabPane, 300, 250);
+
+        // Bind TabPane dimensions to Scene for proper resizing
+        tabPane.prefWidthProperty().bind(scene.widthProperty());
+        tabPane.prefHeightProperty().bind(scene.heightProperty());
+
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private TabPane createTabPane() {
+        TabPane tabPane = new TabPane();
+        // Configure TabPane to fill available space
+        tabPane.setPrefWidth(Double.MAX_VALUE);
+        tabPane.setPrefHeight(Double.MAX_VALUE);
+        tabPane.setMaxWidth(Double.MAX_VALUE);
+        tabPane.setMaxHeight(Double.MAX_VALUE);
+        return tabPane;
+    }
+
+    private Tab createEndpointTab(String endpointName, SingleEndpointPoller poller) {
+        final Tab tab = new Tab(endpointName);
+        tab.setClosable(false);
+
+        // Convert firing alerts to observable items
+        ObservableList<Item> items = createItemsFromAlerts(poller);
+
+        // Create and configure the list view with the items
+        ListView<Item> listView = createListView(poller, items.sorted());
+
+        // Set up the tab content
+        VBox vbox = new VBox();
+        vbox.getChildren().add(new Label("Checked alerts are ignored:"));
+        vbox.getChildren().add(listView);
+        tab.setContent(vbox);
+
+        return tab;
+    }
+
+    private ObservableList<Item> createItemsFromAlerts(SingleEndpointPoller poller) {
+        ObservableList<Item> items = FXCollections.observableArrayList();
+
+        poller.firingAlerts().forEach(alert -> {
+            boolean isIgnored = poller.ignoredAlerts().contains(alert.name());
+
+            // Calculate how long since the alert was last seen
+            long seenSecondsAgo = (alert.lastSeen() == null)
+                    ? 50_000  // Default high value if never seen
+                    : Instant.now().getEpochSecond() - alert.lastSeen().getEpochSecond();
+
+            items.add(new Item(alert.name(), isIgnored, seenSecondsAgo));
+        });
+
+        return items;
     }
 
     private ListView<Item> createListView(SingleEndpointPoller sep, ObservableList<Item> items) {
@@ -153,7 +153,7 @@ public class StatusWindow extends Application {
                     private void setupCheckBoxListener(CheckBox checkBox, Item item) {
                         checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                             item.setSeenSecondsAgo(0);
-                            if (sep.toggleIgnoreOn(item.name)) {
+                            if (sep.toggleIgnoreOn(item.getName())) {
                                 item.setSelected(newVal);
                             }
                         });
