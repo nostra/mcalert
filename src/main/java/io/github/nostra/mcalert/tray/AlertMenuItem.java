@@ -1,14 +1,14 @@
 package io.github.nostra.mcalert.tray;
 
-import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-
 import io.github.nostra.mcalert.model.AlertType;
 import io.github.nostra.mcalert.model.FiringAlertMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 
 public class AlertMenuItem extends MenuItem implements PropertyChangeListener {
     private static final Logger log = LoggerFactory.getLogger(AlertMenuItem.class);
@@ -39,7 +39,7 @@ public class AlertMenuItem extends MenuItem implements PropertyChangeListener {
                 .filter(a -> key.equals(a.resourceKey()))
                 .toArray(FiringAlertMeta[]::new);
         if ( alerts != null && keyAlerts.length != alerts.length ) { // TODO Remove later
-            log.info("Good thing I check where the alert comes from");
+            log.error("Good thing I check where the alert comes from");
         }
 
         // Check if we have exactly one alert and it's DEACTIVATED

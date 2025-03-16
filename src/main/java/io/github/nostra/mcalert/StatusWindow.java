@@ -1,7 +1,5 @@
 package io.github.nostra.mcalert;
 
-import java.time.Instant;
-
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.client.SingleEndpointPoller;
 import javafx.application.Application;
@@ -20,6 +18,8 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
 
 public class StatusWindow extends Application {
     private static final Logger logger = LoggerFactory.getLogger(StatusWindow.class);
@@ -119,6 +119,7 @@ public class StatusWindow extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
     private ListView<Item> createListView(SingleEndpointPoller sep, ObservableList<Item> items) {
         ListView<Item> listView = new ListView<>(items);
         listView.setCellFactory(new Callback<>() {
@@ -165,7 +166,8 @@ public class StatusWindow extends Application {
                                 -fx-strikethrough: true;
                                 """.stripIndent());
                         } else if (item.getSeenSecondsAgo() > 10) {
-                            int maxSeconds = 5000;
+                            // TODO If this is a missing watchdog alert, the color is misleading
+                            int maxSeconds = 2000;
                             int seenSecondsAgo = Math.min((int)item.getSeenSecondsAgo(), maxSeconds);
                             int greenIntensity = Math.max(255 - (seenSecondsAgo * 255 / maxSeconds), 75);
                             checkBox.setStyle(String.format("-fx-background-color: rgb(0, %d, 0);", greenIntensity));
