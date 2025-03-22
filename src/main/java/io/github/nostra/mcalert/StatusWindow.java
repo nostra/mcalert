@@ -36,11 +36,14 @@ public class StatusWindow extends Application {
     public void show(AlertResource alertResource) {
         Platform.runLater(() -> {
             if (primaryStage.isShowing()) {
-                logger.info("Bring to front");
-                primaryStage.toFront(); // Bring to front if already visible
-            } else {
-                logger.info("Create and show");
+                logger.debug("Primary is showing, closing it");
+                primaryStage.hide();
+            } else if ( primaryStage.getScene() == null ){
+                logger.debug("Create and show");
                 createAndShowGUI(alertResource);
+            } else {
+                logger.debug("I have tab pane(s), just calling show");
+                primaryStage.show();
             }
         });
     }

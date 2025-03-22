@@ -86,7 +86,7 @@ public class MaclertTab extends Tab {
                             // TODO If this is a missing watchdog alert, the color is misleading
                             int maxSeconds = 2000;
                             int seenSecondsAgo = Math.min((int)item.getSeenSecondsAgo(), maxSeconds);
-                            int greenIntensity = Math.max(255 - (seenSecondsAgo * 255 / maxSeconds), 75);
+                            int greenIntensity = Math.max(255 - (seenSecondsAgo * 255 / maxSeconds), 125);
                             checkBox.setStyle(String.format("-fx-background-color: rgb(0, %d, 0);", greenIntensity));
                         } else {
                             checkBox.setStyle("-fx-background-color: white;");
