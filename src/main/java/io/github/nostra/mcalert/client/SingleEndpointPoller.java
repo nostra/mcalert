@@ -79,6 +79,7 @@ public class SingleEndpointPoller {
      * @return Return value is filtered for watchdog and irrelevant alerts
      */
     public PrometheusResult callPrometheus(String resourceKeyAsParam) {
+        //log.info("Calling prometheus for {} [{}]", resourceKeyAsParam, active);
         if (!active) {
             firingAlerts = new FiringAlertMeta[]{new FiringAlertMeta(resourceKey, resourceKeyAsParam, 0, Instant.now(), AlertType.DEACTIVATED)};
             pcs.firePropertyChange("firingAlerts", null, firingAlerts);
@@ -110,9 +111,8 @@ public class SingleEndpointPoller {
 
             pcs.firePropertyChange("firingAlerts", firingAlerts, newFiringAlerts);
             boolean toUpdate = false;
-            if (firingAlerts.length != newFiringAlerts.length ) {
-                // TODO Edge case when one firing alert is replaced with another
-                log.debug("New alert(s) triggered: {}", 
+            if (anyChangesComparedToFiringAlerts( newFiringAlerts )) {
+                log.debug("New alert(s) triggered: {}",
                         currentAlerts.stream()
                                 .map(fam -> fam.resourceKey() + "." + fam.name()+"."+fam.alertType().name())
                                 .peek(aname -> {
@@ -125,7 +125,7 @@ public class SingleEndpointPoller {
             }
             firingAlerts = newFiringAlerts;
             if ( toUpdate && tab != null ) {
-                log.debug("Shall update tab");
+                log.trace("Shall update tab {}", tab.getText());
                 tab.updateContentsOfTab(this);
             }
             return result;
@@ -135,6 +135,19 @@ public class SingleEndpointPoller {
             firingAlerts = errorAlerts;
             throw e;
         }
+    }
+
+    private boolean anyChangesComparedToFiringAlerts(FiringAlertMeta[] newFiringAlerts) {
+        if ( firingAlerts.length != newFiringAlerts.length ) {
+            return true;
+        }
+        for ( int i=0 ; i < firingAlerts.length ; i++ ) {
+            if (! firingAlerts[i].name().equals(newFiringAlerts[i].name())) {
+                log.info("{} != {}", firingAlerts[i].name(), newFiringAlerts[i].name());
+                return true;
+            }
+        }
+        return false;
     }
 
     private void updateFiringMapWith(List<AlertModel> result) {

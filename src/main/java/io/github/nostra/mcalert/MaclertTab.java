@@ -12,10 +12,14 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 
 public class MaclertTab extends Tab {
+    private static final Logger logger = LoggerFactory.getLogger(MaclertTab.class);
+
     public MaclertTab(String endpointName) {
         super(endpointName);
     }
