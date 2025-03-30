@@ -217,7 +217,7 @@ public class SingleEndpointPoller {
                     .filter(name -> !watchDogAlerts.containsKey(name))
                     .map(name -> new AlertModel(Collections.emptyMap(),
                             Map.of("alertname", name), "missing",
-                            ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT), 1L))
+                            ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT), "1"))
                     .toList();
         }
         return Collections.emptyList();

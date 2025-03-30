@@ -13,6 +13,7 @@ module io.github.nostra.mcalert {
     requires javafx.web;
     requires java.desktop;
     requires javafx.controls;
+    requires io.netty.common;
 
     opens io.github.nostra.mcalert;
 

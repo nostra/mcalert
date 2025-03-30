@@ -14,6 +14,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotAllowedException;
 import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,8 +87,10 @@ public class AlertResource {
                     status = FAILURE;
                 }
             } catch (Exception e) {
-                logger.info("Trouble calling prometheus. Masked exception is {}", e.getMessage());
+                logger.info("Trouble calling prometheus. Masked exception ({}) is {}", e.getClass().getSimpleName(), e.getMessage());
                 if (e.getCause() instanceof ConnectException) {
+                    status = OFFLINE;
+                } else if (e.getCause() instanceof ServiceUnavailableException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException) {
                     status = NO_ACCESS;
