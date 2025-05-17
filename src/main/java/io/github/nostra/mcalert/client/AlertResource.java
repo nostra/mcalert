@@ -98,7 +98,12 @@ public class AlertResource {
                     switch ( cause.getResponse().getStatus() ) {
                         case 401, 403 -> status = NO_ACCESS;
                         case 404 -> status = FOUR_O_FOUR;
-                        default -> status = UNKNOWN_FAILURE;
+                        case 503 -> status = OFFLINE;
+                        default -> {
+                            status = UNKNOWN_FAILURE;
+                            logger.debug("Might need to create an icon for status {} which gave masked exception: {}",
+                                    cause.getResponse().getStatus(), cause.getLocalizedMessage());
+                        }
                     }
                 } else {
                     status = UNKNOWN_FAILURE;
