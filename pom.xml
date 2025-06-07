@@ -63,6 +63,11 @@
       <artifactId>javafx-web</artifactId>
       <version>${javafx-controls.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-swing</artifactId>
+      <version>${javafx-controls.version}</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
