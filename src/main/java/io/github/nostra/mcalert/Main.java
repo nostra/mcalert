@@ -14,15 +14,15 @@ import java.util.concurrent.Semaphore;
 public class Main implements QuarkusApplication, Runnable {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-    private final McService mcService;
+    private final McTrayService mcTrayService;
 
-    public Main(McService mcService) {
-        this.mcService = mcService;
+    public Main(McTrayService mcTrayService) {
+        this.mcTrayService = mcTrayService;
     }
 
     @Override
     public int run(String... args) {
-        return new CommandLine(new Main(mcService)).execute(args);
+        return new CommandLine(new Main(mcTrayService)).execute(args);
     }
 
     @Override
@@ -34,11 +34,11 @@ public class Main implements QuarkusApplication, Runnable {
         }
 
         new Thread(() -> StatusWindow.doIt()).start();
-        Semaphore mutex =  mcService.execute();
+        Semaphore mutex =  mcTrayService.execute();
         try {
             logger.info("Execute done, now block for exit");
             mutex.acquire();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         } finally {
             logger.info("Exiting");

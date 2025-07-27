@@ -10,13 +10,13 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Semaphore;
 
 @Dependent
-public class McService {
-    private static final Logger log = LoggerFactory.getLogger(McService.class);
+public class McTrayService {
+    private static final Logger log = LoggerFactory.getLogger(McTrayService.class);
 
     private PrometheusTray prometheusTray;
 
     @Inject
-    public McService(PrometheusTray prometheusTray) {
+    public McTrayService(PrometheusTray prometheusTray) {
         this.prometheusTray = prometheusTray;
     }
 
