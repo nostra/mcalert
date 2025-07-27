@@ -115,6 +115,8 @@ quarkus extension add quarkus-scheduler
 java -jar target/quarkus-app/quarkus-run.jar 
 ```
 
+Parameter to disable tray: `-Dquarkus.args=--no-tray`
+
 ## Test static file
 
 In order to test an endpoint the most easily, use jwebserver:
