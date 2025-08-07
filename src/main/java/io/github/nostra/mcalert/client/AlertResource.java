@@ -59,6 +59,7 @@ public class AlertResource {
                         }
                     });
             logger.info("AlertResource initialized with {} endpoints", alertEndpointMap.size());
+            running = true;
         } catch (Exception e) {
             logger.error("When trying to read grafana datasource, an error occurred. Masked it is: "+ e.getMessage(), e);
         }
@@ -174,6 +175,8 @@ public class AlertResource {
         try {
             if ( running ) {
                 fireAndGetCollatedStatus();
+            } else {
+                logger.info("Marked no running, therefore not refreshing");
             }
         } catch (Exception e) {
             logger.error("Error refreshing icon. Masked: {}", e.getMessage());

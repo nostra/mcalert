@@ -252,7 +252,12 @@ public class SingleEndpointPoller {
 
     /// @return A list of datasources provided by grafana
     public List<GrafanaDatasource> callGrafanaForDs() {
-        return caller.callGrafana();
+        try {
+            return caller.callGrafana();
+        } catch (Exception e) {
+            log.error("Catching and ignoring {}. Returning empty list of grafana datasources",e.getMessage(), e) ;
+            return List.of();
+        }
     }
 
     /// Interim method to see which alarts are triggering and not. This
