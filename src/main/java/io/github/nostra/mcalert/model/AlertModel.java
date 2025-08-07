@@ -30,6 +30,6 @@ public record AlertModel(
         String value
 ) {
     public String alertName() {
-        return labels.get("alertname");
+        return labels.getOrDefault("alertname", "ALERT_NAME_NULL");
     }
 }

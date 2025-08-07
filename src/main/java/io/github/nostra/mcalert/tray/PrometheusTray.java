@@ -1,27 +1,29 @@
 package io.github.nostra.mcalert.tray;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.concurrent.Semaphore;
-
 import io.github.nostra.mcalert.StatusWindow;
 import io.github.nostra.mcalert.client.AlertResource;
+import io.github.nostra.mcalert.client.EndpointCallEnum;
 import io.github.nostra.mcalert.exception.McException;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.Shutdown;
-import io.quarkus.scheduler.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.concurrent.Semaphore;
+
 @Singleton
-public class PrometheusTray {
+public class PrometheusTray implements PropertyChangeListener {
     private static final Logger logger = LoggerFactory.getLogger(PrometheusTray.class);
     private TrayIcon trayIcon ;
     private Image okImage;
@@ -31,10 +33,8 @@ public class PrometheusTray {
     private Image noAccessImage;
     private Image deactivatedImage;
     private final Semaphore mutex = new Semaphore(1);
-    private boolean running = false;
 
     private final AlertResource alertResource;
-    private StatusWindow statusViewFxApp = null;
 
     @Inject
     public PrometheusTray( AlertResource alertResource) {
@@ -52,26 +52,22 @@ public class PrometheusTray {
             noAccessImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/prohibited-line.png")));
             deactivatedImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/information-off-line.png")));
 
-            statusViewFxApp = new StatusWindow();
-           //  new Thread(() -> statusViewFxApp.doIt());
-            //alertResource.setStatusWindow(statusViewFxApp);
-
         } catch (IOException e) {
             throw new McException("Could not initialize", e);
-        } catch (InterruptedException ignore) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         }
 
+        alertResource.addPropertyChangeListener(this);
         // sets up the tray icon (using awt code run on the swing thread).
         SwingUtilities.invokeLater(this::addIconToTray);
-        running = true;
         return mutex;
     }
 
     @Shutdown
     void shutdown() {
         logger.info("Shutdown-hook triggered");
-        running = true;
+        alertResource.removePropertyChangeListener(this);
         SwingUtilities.invokeLater(this::removeIconFromTray);
     }
 
@@ -79,7 +75,7 @@ public class PrometheusTray {
         try {
             SystemTray tray = SystemTray.getSystemTray();
             tray.remove(trayIcon);
-        } catch (UnsupportedOperationException ignore) {
+        } catch (UnsupportedOperationException _) {
             // ignore
         } catch (Exception e) {
             logger.error("Trouble cleaning up....", e);
@@ -90,7 +86,7 @@ public class PrometheusTray {
     private void addIconToTray() {
         trayIcon = new TrayIcon(circleImage);
         trayIcon.setImageAutoSize(true);
-        trayIcon.addActionListener(_ -> SwingUtilities.invokeLater(this::callAndRefreshIcon));
+        trayIcon.addActionListener(_ -> SwingUtilities.invokeLater(() -> alertResource.fireAndGetCollatedStatus()));
         trayIcon.setPopupMenu(constructTrayMenu());
         trayIcon.setToolTip("McAlert");
 
@@ -128,7 +124,7 @@ public class PrometheusTray {
         var refreshItem = new MenuItem("refresh");
         refreshItem.addActionListener(e -> {
             logger.debug("Menuitem triggered, force refresh");
-            callAndRefreshIcon();
+            refreshTrayIconWith(alertResource.fireAndGetCollatedStatus());
         });
         menuItems.add( refreshItem );
 
@@ -146,22 +142,7 @@ public class PrometheusTray {
         return popup;
     }
 
-    /**
-     * Call Prometheus endpoint and update the icon accordingly
-     */
-     @Scheduled( every = "${scheduledRefresh.every:60s}")
-     void scheduledRefresh() {
-         try {
-             if ( running ) {
-                 callAndRefreshIcon();
-             }
-         } catch (Exception e) {
-             logger.error("Error refreshing icon. Masked: {}", e.getMessage());
-         }
-     }
-
-     void callAndRefreshIcon() {
-        var status = alertResource.fireAndGetCollatedStatus();
+     void refreshTrayIconWith(EndpointCallEnum status) {
         switch (status) {
             case EMPTY -> logger.warn("Configuration error: No endpoints configured");
             case FOUR_O_FOUR, OFFLINE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(offlineImage));
@@ -169,6 +150,15 @@ public class PrometheusTray {
             case NO_ACCESS -> SwingUtilities.invokeLater(() -> trayIcon.setImage(noAccessImage));
             case ALL_DEACTIVATED -> SwingUtilities.invokeLater(() -> trayIcon.setImage(deactivatedImage));
             case UNKNOWN_FAILURE, FAILURE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(failureImage));
+        }
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if ( "statusChange".equals(evt.getPropertyName())) {
+            refreshTrayIconWith((EndpointCallEnum) evt.getNewValue());
+        } else {
+            logger.warn("Got unexpected event {}", evt.getPropertyName());
         }
     }
 }

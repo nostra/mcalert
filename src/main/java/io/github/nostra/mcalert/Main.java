@@ -31,7 +31,9 @@ public class Main implements QuarkusApplication, Runnable {
         logger.error("Got args " + List.of(args));
         logger.error("Value of noTray: " + noTray);
         // For some reason, the "noTray" variable is not correctly populated
-        if ( noTray || Set.of(args).contains("--no-tray") || System.getProperty("NO_TRAY") != null) {
+        if ( noTray || Set.of(args).contains("--no-tray")
+                || System.getProperty("NO_TRAY") != null
+                || !java.awt.SystemTray.isSupported()) {
             logger.info("System tray support disabled by --no-tray argument or system variable.");
             logger.warn("Currently exiting, later do something useful");
             Quarkus.asyncExit(0);
@@ -45,12 +47,6 @@ public class Main implements QuarkusApplication, Runnable {
 
     @Override
     public void run() {
-        if (!java.awt.SystemTray.isSupported()) {
-            logger.error("No system tray support, application exiting.");
-            Quarkus.asyncExit(2);
-            return;
-        }
-
         new Thread(() -> StatusWindow.doIt()).start();
         Semaphore mutex = mcTrayService.execute();
         try {

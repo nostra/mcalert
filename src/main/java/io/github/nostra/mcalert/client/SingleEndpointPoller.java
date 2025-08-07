@@ -13,6 +13,7 @@ import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URI;
@@ -79,7 +80,6 @@ public class SingleEndpointPoller {
      * @return Return value is filtered for watchdog and irrelevant alerts
      */
     public PrometheusResult callPrometheus(String resourceKeyAsParam) {
-        //log.info("Calling prometheus for {} [{}]", resourceKeyAsParam, active);
         if (!active) {
             firingAlerts = new FiringAlertMeta[]{new FiringAlertMeta(resourceKey, resourceKeyAsParam, 0, Instant.now(), AlertType.DEACTIVATED)};
             pcs.firePropertyChange("firingAlerts", null, firingAlerts);
@@ -96,7 +96,7 @@ public class SingleEndpointPoller {
             List<FiringAlertMeta> currentAlerts = result.data().alerts().stream()
                     .map(alert -> new FiringAlertMeta(
                             resourceKey,
-                            alert.alertName(),
+                            (alert.alertName()==null ? "ERROR" : alert.alertName()),
                             1,
                             Instant.now(),
                             AlertType.ACTIVE))
@@ -142,7 +142,11 @@ public class SingleEndpointPoller {
             return true;
         }
         for ( int i=0 ; i < firingAlerts.length ; i++ ) {
-            if (! firingAlerts[i].name().equals(newFiringAlerts[i].name())) {
+            if ( firingAlerts[i] == null || firingAlerts[i].name() == null ) {
+                log.warn("Object or name is null? Unexpected, this is item {} out of {}", i, firingAlerts.length - 1 );
+                return true;
+            }
+            else if (! firingAlerts[i].name().equals(newFiringAlerts[i].name())) {
                 log.info("{} != {}", firingAlerts[i].name(), newFiringAlerts[i].name());
                 return true;
             }
@@ -176,6 +180,12 @@ public class SingleEndpointPoller {
 
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.removePropertyChangeListener(listener);
+    }
+
+    public void firePropertyChange( String name, Object oldValue, Object newValue ) {
+        PropertyChangeEvent event = new PropertyChangeEvent(this, name, oldValue, newValue);
+        log.warn("Firing {} with value {}", name, newValue);
+        pcs.firePropertyChange(event);
     }
 
     public void toggleActive() {

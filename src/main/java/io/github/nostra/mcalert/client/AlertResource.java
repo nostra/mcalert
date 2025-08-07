@@ -10,6 +10,8 @@ import static io.github.nostra.mcalert.client.EndpointCallEnum.SUCCESS;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.UNKNOWN_FAILURE;
 import io.github.nostra.mcalert.config.AlertEndpointConfig;
 import io.github.nostra.mcalert.exception.McConfigurationException;
+import io.quarkus.runtime.Shutdown;
+import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotAllowedException;
@@ -19,7 +21,11 @@ import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.net.ConnectException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,6 +36,10 @@ public class AlertResource {
     private final AlertEndpointConfig alertEndpointConfig;
 
     private Map<String, SingleEndpointPoller> alertEndpointMap;
+    private Map<String, EndpointCallEnum> previousResult = new HashMap<>();
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
+    private boolean running = false;
 
     public AlertResource(AlertEndpointConfig alertEndpointConfig) {
         this.alertEndpointConfig = alertEndpointConfig;
@@ -83,9 +93,13 @@ public class AlertResource {
                     if ( status == null ) {
                         status = SUCCESS;
                     }
-                } else {
+                } else if ( status == null || status == SUCCESS ) {
+                    // Only set status = failure if it did not have a prior error in order not to mask reason
                     status = FAILURE;
                 }
+            } catch (NullPointerException e) {
+                logger.error("Bah - got a NPE, please fix", e );
+                status = FAILURE;
             } catch (Exception e) {
                 logger.info("Trouble calling prometheus. Masked exception ({}) is {}", e.getClass().getSimpleName(), e.getMessage());
                 if (e.getCause() instanceof ConnectException) {
@@ -110,9 +124,29 @@ public class AlertResource {
                 }
             }
         }
-        return alertEndpointMap.entrySet().stream().noneMatch(p -> p.getValue().isActive())
+        EndpointCallEnum collatedStatus = alertEndpointMap.entrySet().stream().noneMatch(p -> p.getValue().isActive())
                 ? ALL_DEACTIVATED
                 : status;
+        fireResult( "statusChange", status );
+        return collatedStatus;
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        this.pcs.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        this.pcs.removePropertyChangeListener(listener);
+    }
+
+    private void fireResult( String key, EndpointCallEnum status) {
+        EndpointCallEnum previous = previousResult.getOrDefault(key, OFFLINE);
+        if ( previous != status ) {
+            previousResult.put(key, status);
+            logger.info("To trigger property change for {}/{}", key, status);
+            PropertyChangeEvent event = new PropertyChangeEvent(this, key, previous, status);
+            pcs.firePropertyChange(event);
+        }
     }
 
     public Map<String, SingleEndpointPoller> map() {
@@ -124,4 +158,26 @@ public class AlertResource {
         sep.toggleActive();
         sep.outputStatus();
     }
+
+
+    @Shutdown
+    void shutdown() {
+        logger.info("Shutdown-hook triggered");
+        running = false;
+    }
+
+    /**
+     * Call Prometheus endpoint and update the icon accordingly
+     */
+    @Scheduled( every = "${scheduledRefresh.every:60s}")
+    void scheduledRefresh() {
+        try {
+            if ( running ) {
+                fireAndGetCollatedStatus();
+            }
+        } catch (Exception e) {
+            logger.error("Error refreshing icon. Masked: {}", e.getMessage());
+        }
+    }
+
 }
