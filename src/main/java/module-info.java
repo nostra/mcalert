@@ -14,6 +14,7 @@ module io.github.nostra.mcalert {
     requires java.desktop;
     requires javafx.controls;
     requires io.netty.common;
+    requires jakarta.inject;
 
     opens io.github.nostra.mcalert;
 

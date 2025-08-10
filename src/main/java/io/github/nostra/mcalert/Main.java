@@ -1,6 +1,5 @@
 package io.github.nostra.mcalert;
 
-import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import org.slf4j.Logger;
@@ -13,7 +12,7 @@ import java.util.concurrent.Semaphore;
 
 @QuarkusMain
 @CommandLine.Command
-public class Main implements QuarkusApplication, Runnable {
+public class Main implements QuarkusApplication {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     private final McTrayService mcTrayService;
@@ -31,32 +30,26 @@ public class Main implements QuarkusApplication, Runnable {
         logger.error("Got args " + List.of(args));
         logger.error("Value of noTray: " + noTray);
         // For some reason, the "noTray" variable is not correctly populated
-        if ( noTray || Set.of(args).contains("--no-tray")
+        boolean reallyNoTray = noTray
+                || Set.of(args).contains("--no-tray")
                 || System.getProperty("NO_TRAY") != null
-                || !java.awt.SystemTray.isSupported()) {
+                || !java.awt.SystemTray.isSupported();
+        new Thread(() -> StatusWindow.doIt()).start();
+        Semaphore mutex;
+        if ( reallyNoTray) {
             logger.info("System tray support disabled by --no-tray argument or system variable.");
             logger.warn("Currently exiting, later do something useful");
-            Quarkus.asyncExit(0);
-            return 0;
+            mutex = mcTrayService.startWithoutTray();
         } else {
             logger.info("System tray support enabled.");
-            run();
-            return 0;
+            mutex = mcTrayService.startTray();
         }
-    }
 
-    @Override
-    public void run() {
-        new Thread(() -> StatusWindow.doIt()).start();
-        Semaphore mutex = mcTrayService.execute();
-        try {
-            logger.info("Execute done, now block for exit");
-            mutex.acquire();
-        } catch (InterruptedException _) {
-            Thread.currentThread().interrupt();
-        } finally {
-            logger.info("Exiting");
-            mutex.release();
-        }
+        logger.info("Execute done, now block for exit");
+        mutex.acquireUninterruptibly();
+        logger.info("Exiting");
+        mutex.release();
+
+        return 0;
     }
 }

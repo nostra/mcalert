@@ -11,12 +11,16 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Semaphore;
+
 public class StatusWindow extends Application {
     private static final Logger logger = LoggerFactory.getLogger(StatusWindow.class);
     private static StatusWindow instance;
     private Stage primaryStage;
+    private static final Semaphore blockForStart = new Semaphore(1);
 
     public static void doIt() {
+        blockForStart.acquireUninterruptibly();
         launch();
     }
 
@@ -31,6 +35,7 @@ public class StatusWindow extends Application {
         this.primaryStage = primaryStage;
         Platform.setImplicitExit(false);
         primaryStage.setTitle("Firing alerts");
+        blockForStart.release();
     }
 
     public void show(AlertResource alertResource) {
@@ -82,5 +87,10 @@ public class StatusWindow extends Application {
         tab.setClosable(false);
 
         return tab;
+    }
+
+    public static void blockUntilStarted() {
+        blockForStart.acquireUninterruptibly();
+        blockForStart.release();
     }
 }
