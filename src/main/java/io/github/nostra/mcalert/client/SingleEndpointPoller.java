@@ -82,7 +82,7 @@ public class SingleEndpointPoller {
     public PrometheusResult callPrometheus(String resourceKeyAsParam) {
         if (!active) {
             firingAlerts = new FiringAlertMeta[]{new FiringAlertMeta(resourceKey, resourceKeyAsParam, 0, Instant.now(), AlertType.DEACTIVATED)};
-            pcs.firePropertyChange("firingAlerts", null, firingAlerts);
+            firePropertyChange("firingAlerts", null, firingAlerts);
             return new PrometheusResult("success", new PrometheusData(Collections.emptyList()), resourceKeyAsParam);
         }
 
@@ -109,7 +109,7 @@ public class SingleEndpointPoller {
             FiringAlertMeta[] newFiringAlerts = currentAlerts.toArray(new FiringAlertMeta[0]);
             log.trace("Calling api endpoint for configuration {}. Got {} alerts", resourceKeyAsParam, currentAlerts.size());
 
-            pcs.firePropertyChange("firingAlerts", firingAlerts, newFiringAlerts);
+            firePropertyChange("firingAlerts", firingAlerts, newFiringAlerts);
             boolean toUpdate = false;
             if (anyChangesComparedToFiringAlerts( newFiringAlerts )) {
                 log.debug("New alert(s) triggered: {}",
@@ -131,7 +131,7 @@ public class SingleEndpointPoller {
             return result;
         } catch (Exception e) {
             FiringAlertMeta[] errorAlerts = {new FiringAlertMeta(resourceKey, resourceKeyAsParam, -2, Instant.now(), AlertType.INACTIVE)};
-            pcs.firePropertyChange("firingAlerts", firingAlerts, errorAlerts);
+            firePropertyChange("firingAlerts", firingAlerts, errorAlerts);
             firingAlerts = errorAlerts;
             throw e;
         }
@@ -184,7 +184,7 @@ public class SingleEndpointPoller {
 
     public void firePropertyChange( String name, Object oldValue, Object newValue ) {
         PropertyChangeEvent event = new PropertyChangeEvent(this, name, oldValue, newValue);
-        log.warn("Firing {} with value {}", name, newValue);
+        // log.warn("Firing {} with value {}", name, newValue);
         pcs.firePropertyChange(event);
     }
 
@@ -198,7 +198,7 @@ public class SingleEndpointPoller {
                         Instant.now(),
                         AlertType.DEACTIVATED))
                 .toArray(FiringAlertMeta[]::new);
-        pcs.firePropertyChange("firingAlerts", firingAlerts, deactivatedAlerts);
+        firePropertyChange("firingAlerts", firingAlerts, deactivatedAlerts);
         firingAlerts = deactivatedAlerts;
     }
 

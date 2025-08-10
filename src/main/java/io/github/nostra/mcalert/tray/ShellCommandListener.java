@@ -33,6 +33,8 @@ public class ShellCommandListener implements PropertyChangeListener {
         if ( config.commandLine().isPresent() ) {
             shellCommand = config.commandLine().get().shellCommand();
             alertResource.addPropertyChangeListener(this);
+            // TODO Might want to trigger on specific change, preferably with alert description
+            // alertResource.map().values().forEach(singleEndpointPoller -> singleEndpointPoller.addPropertyChangeListener(this));
         }
     }
 
@@ -46,6 +48,8 @@ public class ShellCommandListener implements PropertyChangeListener {
         if ( "statusChange".equals(evt.getPropertyName())) {
             EndpointCallEnum collatedStatus = (EndpointCallEnum) evt.getNewValue();
             callShellWith( collatedStatus);
+        //} else if ("firingAlerts".equals(evt.getPropertyName())) {
+        //    logger.error("firingAlerts {}", evt.getPropertyName());
         } else {
             logger.warn("Got unexpected event {}", evt.getPropertyName());
         }
