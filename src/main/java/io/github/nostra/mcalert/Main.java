@@ -35,15 +35,8 @@ public class Main implements QuarkusApplication {
                 || System.getProperty("NO_TRAY") != null
                 || !java.awt.SystemTray.isSupported();
         new Thread(() -> StatusWindow.doIt()).start();
-        Semaphore mutex;
-        if ( reallyNoTray) {
-            logger.info("System tray support disabled by --no-tray argument or system variable.");
-            logger.warn("Currently exiting, later do something useful");
-            mutex = mcTrayService.startWithoutTray();
-        } else {
-            logger.info("System tray support enabled.");
-            mutex = mcTrayService.startTray();
-        }
+
+        Semaphore mutex =  mcTrayService.startServices( noTray );
 
         logger.info("Execute done, now block for exit");
         mutex.acquireUninterruptibly();

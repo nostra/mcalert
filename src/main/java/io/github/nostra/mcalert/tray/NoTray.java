@@ -32,8 +32,6 @@ public class NoTray {
             Thread.currentThread().interrupt();
         }
 
-        //alertResource.addPropertyChangeListener(this);
-        // sets up the tray icon (using awt code run on the swing thread).
         return mutex;
     }
 

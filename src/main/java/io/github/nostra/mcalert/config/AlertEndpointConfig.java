@@ -10,6 +10,7 @@ import java.util.Optional;
 @ConfigMapping(prefix = "mcalert.prometheus")
 public interface AlertEndpointConfig {
     Map<String, AlertEndpoint> endpoints();
+    Optional<CommandLine> commandLine();
 
     interface AlertEndpoint {
         URI uri();
@@ -28,5 +29,9 @@ public interface AlertEndpointConfig {
     interface Header {
         String name();
         String content();
+    }
+
+    interface CommandLine {
+        String shellCommand();
     }
 }

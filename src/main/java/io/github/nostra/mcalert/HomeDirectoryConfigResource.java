@@ -33,7 +33,7 @@ public class HomeDirectoryConfigResource implements ConfigSource {
                 properties.load(input);
             }
             properties.forEach((key, value) -> configuration.put("" + key, "" + value));
-        } catch (IOException e) {
+        } catch (IOException _) {
             logger.info("Could not find a configuration file name {}", propertiesPath);
         }
     }

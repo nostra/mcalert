@@ -50,6 +50,18 @@ mcalert.prometheus.endpoints<NAME>.header[0].name=Authorization
 mcalert.prometheus.endpoints<NAME>.header[0].content=Basic dXNlcm5hbWU6cGFzc3dvcmQ=
 ```
 
+You can add a shell command to trigger upon change of alert status. First parameter is
+for now always `status`, and the second parameter is the value from the enum
+[src/main/java/io/github/nostra/mcalert/client/EndpointCallEnum.java]
+
+In your script, the easiest is to differntiate between SUCCESS and other values.
+
+```
+%dev.mcalert.prometheus.command-line.shell-command=/full-path-to/some-shell.sh
+```
+
+
+
 ### Use grafana as Prometheus proxy
 
 Give mcalert the following configuration to dynamically find and use the
