@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -81,8 +82,11 @@ public class SingleEndpointPoller {
      */
     public PrometheusResult callPrometheus(String resourceKeyAsParam) {
         if (!active) {
-            firingAlerts = new FiringAlertMeta[]{new FiringAlertMeta(resourceKey, resourceKeyAsParam, 0, Instant.now(), AlertType.DEACTIVATED)};
-            firePropertyChange("firingAlerts", null, firingAlerts);
+            FiringAlertMeta[] newFiringAlerts = new FiringAlertMeta[]{
+                    new FiringAlertMeta(resourceKey, resourceKeyAsParam, 0, Instant.now(), AlertType.DEACTIVATED)
+            };
+            firePropertyChange("firingAlerts", firingAlerts, newFiringAlerts);
+            firingAlerts = newFiringAlerts;
             return new PrometheusResult("success", new PrometheusData(Collections.emptyList()), resourceKeyAsParam);
         }
 
@@ -180,6 +184,24 @@ public class SingleEndpointPoller {
 
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.removePropertyChangeListener(listener);
+    }
+
+    public void firePropertyChange( String name, FiringAlertMeta[]  oldValue, FiringAlertMeta[]  newValue ) {
+        Set<String> oldAlertNames = namesFrom( oldValue );
+        Set<String> newAlertNames = namesFrom( newValue );
+        if ( oldAlertNames.size() == newAlertNames.size() &&
+                oldAlertNames.containsAll(newAlertNames)) {
+            log.trace("Not sending change event, as nothing is changed");
+            return;
+        }
+        log.trace("Something is changed");
+        firePropertyChange(name, (Object) oldValue, (Object) newValue );
+    }
+
+    private Set<String> namesFrom(FiringAlertMeta[] meta) {
+        return meta == null
+                ? Set.of()
+                : Stream.of(meta).map(FiringAlertMeta::name).collect(Collectors.toUnmodifiableSet());
     }
 
     public void firePropertyChange( String name, Object oldValue, Object newValue ) {
