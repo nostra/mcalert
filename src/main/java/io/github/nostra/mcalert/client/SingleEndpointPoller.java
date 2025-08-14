@@ -59,7 +59,7 @@ public class SingleEndpointPoller {
         // Iterate over the union set and add each item to the firing hashmap in order to see which that never fires
         Stream.concat(watchdogAlertNames.stream(), namesToIgnore.stream())
                 .forEach(alertName -> firing
-                        .putIfAbsent(alertName, new FiringAlertMeta(resourceKey,alertName, 0, null, AlertType.INACTIVE)));
+                        .putIfAbsent(alertName, new FiringAlertMeta(resourceKey,alertName, 0, null, AlertType.INACTIVE, "")));
     }
 
     public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config) {
@@ -83,7 +83,7 @@ public class SingleEndpointPoller {
     public PrometheusResult callPrometheus(String resourceKeyAsParam) {
         if (!active) {
             FiringAlertMeta[] newFiringAlerts = new FiringAlertMeta[]{
-                    new FiringAlertMeta(resourceKey, resourceKeyAsParam, 0, Instant.now(), AlertType.DEACTIVATED)
+                    new FiringAlertMeta(resourceKey, resourceKeyAsParam, 0, Instant.now(), AlertType.DEACTIVATED, "")
             };
             firePropertyChange("firingAlerts", firingAlerts, newFiringAlerts);
             firingAlerts = newFiringAlerts;
@@ -103,11 +103,12 @@ public class SingleEndpointPoller {
                             (alert.alertName()==null ? "ERROR" : alert.alertName()),
                             1,
                             Instant.now(),
-                            AlertType.ACTIVE))
+                            AlertType.ACTIVE,
+                            alert.descriptionFieldFromAlert()))
                     .collect(Collectors.toList());
 
             if (currentAlerts.isEmpty()) {
-                currentAlerts.add(new FiringAlertMeta(resourceKey,resourceKeyAsParam, 0, Instant.now(), AlertType.INACTIVE));
+                currentAlerts.add(new FiringAlertMeta(resourceKey,resourceKeyAsParam, 0, Instant.now(), AlertType.INACTIVE, ""));
             }
 
             FiringAlertMeta[] newFiringAlerts = currentAlerts.toArray(new FiringAlertMeta[0]);
@@ -134,7 +135,7 @@ public class SingleEndpointPoller {
             }
             return result;
         } catch (Exception e) {
-            FiringAlertMeta[] errorAlerts = {new FiringAlertMeta(resourceKey, resourceKeyAsParam, -2, Instant.now(), AlertType.INACTIVE)};
+            FiringAlertMeta[] errorAlerts = {new FiringAlertMeta(resourceKey, resourceKeyAsParam, -2, Instant.now(), AlertType.INACTIVE, "")};
             firePropertyChange("firingAlerts", firingAlerts, errorAlerts);
             firingAlerts = errorAlerts;
             throw e;
@@ -169,7 +170,8 @@ public class SingleEndpointPoller {
                                 am.alertName(),
                                 1,
                                 Instant.now(),
-                                AlertType.ACTIVE
+                                AlertType.ACTIVE,
+                                am.descriptionFieldFromAlert()
                         );
                     } else {
                         fam = fam.increment();
@@ -218,7 +220,8 @@ public class SingleEndpointPoller {
                         alert.name(),
                         alert.numberOfAlerts(),
                         Instant.now(),
-                        AlertType.DEACTIVATED))
+                        AlertType.DEACTIVATED,
+                        ""))
                 .toArray(FiringAlertMeta[]::new);
         firePropertyChange("firingAlerts", firingAlerts, deactivatedAlerts);
         firingAlerts = deactivatedAlerts;

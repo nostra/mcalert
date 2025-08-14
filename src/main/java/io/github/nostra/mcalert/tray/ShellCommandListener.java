@@ -75,7 +75,8 @@ public class ShellCommandListener implements PropertyChangeListener {
                 shellCommand,
                 "alert",
                 firingAlertMeta.resourceKey(),
-                firingAlertMeta.name()
+                firingAlertMeta.name(),
+                firingAlertMeta.description()
         };
         processExec(cmd);
     }

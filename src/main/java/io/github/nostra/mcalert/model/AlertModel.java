@@ -32,4 +32,13 @@ public record AlertModel(
     public String alertName() {
         return labels.getOrDefault("alertname", "ALERT_NAME_NULL");
     }
+
+    /// @return Try to find something interesting to return, or empty string of nothing found. Usually,
+    /// the description annotation would be nice
+    public String descriptionFieldFromAlert() {
+        return annotations()
+                .getOrDefault("description", annotations()
+                        .getOrDefault("summary", ""));
+    }
+
 }

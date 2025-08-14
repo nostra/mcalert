@@ -8,10 +8,11 @@ public record FiringAlertMeta(
         String name,
         int numberOfAlerts,
         Instant lastSeen,
-        AlertType alertType
+        AlertType alertType,
+        String description
         ) {
     public FiringAlertMeta increment() {
-        return new FiringAlertMeta(resourceKey, name, numberOfAlerts + 1, Instant.now(), alertType);
+        return new FiringAlertMeta(resourceKey, name, numberOfAlerts + 1, Instant.now(), alertType, description);
     }
     // Consider info about disable
     /*
