@@ -70,6 +70,10 @@ public class ShellCommandListener implements PropertyChangeListener {
 
 
     private void callShellWith(FiringAlertMeta firingAlertMeta) {
+        if ( firingAlertMeta.resourceKey()==null) {
+            logger.warn("Not firing alert due to missing resource key. AlertMeta: "+firingAlertMeta);
+            return;
+        }
         logger.info("Firing to file "+firingAlertMeta);
         String[] cmd = new String[]{
                 shellCommand,

@@ -152,7 +152,7 @@ public class SingleEndpointPoller {
                 return true;
             }
             else if (! firingAlerts[i].name().equals(newFiringAlerts[i].name())) {
-                log.info("{} != {}", firingAlerts[i].name(), newFiringAlerts[i].name());
+                log.debug("{} != {}", firingAlerts[i].name(), newFiringAlerts[i].name());
                 return true;
             }
         }
@@ -322,8 +322,8 @@ public class SingleEndpointPoller {
         return true;
     }
 
-    ///  Set the configuration key used for this poller
-    public void setResourceKey(String resourceKey) {
+    ///  Set the configuration key used for this poller, used as title for tabs and such
+    void setResourceKey(String resourceKey) {
         this.resourceKey = resourceKey;
     }
 

@@ -112,7 +112,6 @@ public class PrometheusTray implements PropertyChangeListener {
 
         alertResource.map().forEach((key, value) -> {
             AlertMenuItem item = new AlertMenuItem(key);
-            value.setResourceKey( key );
             value.addPropertyChangeListener(item);
             item.addActionListener(e -> {
                 logger.info("Event is: {}", e);

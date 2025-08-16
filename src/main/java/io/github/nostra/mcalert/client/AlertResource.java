@@ -16,6 +16,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotAllowedException;
 import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
@@ -71,6 +72,10 @@ public class AlertResource {
                 .stream()
                 .filter(entry -> isDatasourceEmpty(entry.getValue().datasource()))
                 .map(entry -> Map.entry(entry.getKey(), new SingleEndpointPoller(entry.getValue())))
+                .map( entry -> {
+                    entry.getValue().setResourceKey(entry.getKey());
+                    return entry;
+                })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -89,6 +94,9 @@ public class AlertResource {
         EndpointCallEnum status = null;
         for (var entry : alertEndpointMap.entrySet()) {
             try {
+                if ( entry == null || entry.getValue() == null ) {
+                    throw new RuntimeException("Null for entry-value. Entry as such is "+entry);
+                }
                 var prom = entry.getValue().callPrometheus(entry.getKey());
                 if ( prom.status().equalsIgnoreCase("success") && prom.noAlerts()) {
                     if ( status == null ) {
@@ -106,6 +114,8 @@ public class AlertResource {
                 if (e.getCause() instanceof ConnectException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof ServiceUnavailableException) {
+                    status = OFFLINE;
+                } else if (e.getCause() instanceof ProcessingException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException) {
                     status = NO_ACCESS;

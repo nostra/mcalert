@@ -36,7 +36,7 @@ public class Main implements QuarkusApplication {
                 || !java.awt.SystemTray.isSupported();
         new Thread(() -> StatusWindow.doIt()).start();
 
-        Semaphore mutex =  mcTrayService.startServices( noTray );
+        Semaphore mutex =  mcTrayService.startServices( reallyNoTray );
 
         logger.info("Execute done, now block for exit");
         mutex.acquireUninterruptibly();
