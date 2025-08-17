@@ -16,7 +16,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotAllowedException;
 import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
@@ -26,6 +25,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -115,7 +115,7 @@ public class AlertResource {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof ServiceUnavailableException) {
                     status = OFFLINE;
-                } else if (e.getCause() instanceof ProcessingException) {
+                } else if (e.getCause() instanceof UnknownHostException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException) {
                     status = NO_ACCESS;
@@ -131,6 +131,7 @@ public class AlertResource {
                         }
                     }
                 } else {
+                    logger.warn("Unmapped problem. Exception class: {} and cause {}", e.getClass().getName(), e.getCause().getClass().getName());
                     status = UNKNOWN_FAILURE;
                 }
             }

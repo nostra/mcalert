@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
@@ -36,6 +37,10 @@ public class ShellCommandListener implements PropertyChangeListener {
     public void init() {
         if ( config.commandLine().isPresent() ) {
             shellCommand = config.commandLine().get().shellCommand();
+            if ( !new File(shellCommand).canExecute() ){
+                logger.warn("File to execute not found: {}", shellCommand);
+                logger.warn("Please add the file and make it executable");
+            }
             alertResource.addPropertyChangeListener(this);
             alertResource.map().values().forEach(singleEndpointPoller -> singleEndpointPoller.addPropertyChangeListener(this));
         }
@@ -71,10 +76,10 @@ public class ShellCommandListener implements PropertyChangeListener {
 
     private void callShellWith(FiringAlertMeta firingAlertMeta) {
         if ( firingAlertMeta.resourceKey()==null) {
-            logger.warn("Not firing alert due to missing resource key. AlertMeta: "+firingAlertMeta);
+            logger.warn("Not firing alert due to missing resource key. AlertMeta: {}", firingAlertMeta);
             return;
         }
-        logger.info("Firing to file "+firingAlertMeta);
+        logger.debug("Firing to file {}",firingAlertMeta);
         String[] cmd = new String[]{
                 shellCommand,
                 "alert",
@@ -95,12 +100,18 @@ public class ShellCommandListener implements PropertyChangeListener {
     }
 
     private static void processExec(String[] cmd) {
+        if ( !new File(cmd[0]).canExecute() ){
+            logger.error("Cannot find file to execute: {}", cmd[0]);
+            return;
+        }
         try {
             Process process = Runtime.getRuntime().exec(cmd);
             process.waitFor();
-        } catch (IOException | InterruptedException e) {
-            logger.error("Unexpected exception calling command {}", List.of(cmd), e);
+        } catch ( InterruptedException e) {
+            logger.error("Got unexpectedly interrupted", e);
             Thread.currentThread().interrupt();
+        } catch (IOException e) {
+            logger.error("Unexpected exception calling command {}", List.of(cmd), e);
         }
     }
 }
