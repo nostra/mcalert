@@ -32,7 +32,7 @@ public class GrafanaDatasourcePoller {
                 .stream()
                 .filter(entry -> !isDatasourceEmpty(entry.getValue().datasource()))
                 .map(entry -> {
-                    var ep = findEpFromDs(entry.getValue());
+                    var ep = findEpFromDs(entry.getKey(), entry.getValue());
                     return ep == null
                             ? null
                             : Map.entry(entry.getKey(), ep);
@@ -41,13 +41,13 @@ public class GrafanaDatasourcePoller {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private SingleEndpointPoller findEpFromDs(AlertEndpointConfig.AlertEndpoint alertEndpoint) {
-        List<SingleEndpointPoller> list = new SingleEndpointPoller(alertEndpoint)
+    private SingleEndpointPoller findEpFromDs(String key, AlertEndpointConfig.AlertEndpoint alertEndpoint) {
+        List<SingleEndpointPoller> list = new SingleEndpointPoller(key, alertEndpoint)
                 .callGrafanaForDs()
                 .stream()
                 .filter(d -> d.name().equals(alertEndpoint.datasource().orElseThrow(() -> new McConfigurationException("Unexpected use in method"))))
                 .map(ds -> new GrafanaAlertEndpoint(alertEndpoint, ds))
-                .map(SingleEndpointPoller::new)
+                .map( gep -> new SingleEndpointPoller(key, gep))
                 .toList();
 
         if (list.size() != 1) {

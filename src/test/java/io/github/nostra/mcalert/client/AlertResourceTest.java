@@ -129,7 +129,7 @@ class AlertResourceTest {
                 return List.of();
             }
         };
-        return new SingleEndpointPoller(cfg, junitMockCaller);
+        return new SingleEndpointPoller("junit", cfg, junitMockCaller);
     }
 
     private List<GrafanaDatasource> readGrafanaData() {

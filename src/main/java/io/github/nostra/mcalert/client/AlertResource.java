@@ -71,11 +71,7 @@ public class AlertResource {
                 .entrySet()
                 .stream()
                 .filter(entry -> isDatasourceEmpty(entry.getValue().datasource()))
-                .map(entry -> Map.entry(entry.getKey(), new SingleEndpointPoller(entry.getValue())))
-                .map( entry -> {
-                    entry.getValue().setResourceKey(entry.getKey());
-                    return entry;
-                })
+                .map(entry -> Map.entry(entry.getKey(), new SingleEndpointPoller(entry.getKey(), entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 

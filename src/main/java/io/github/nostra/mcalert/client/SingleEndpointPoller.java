@@ -2,6 +2,7 @@ package io.github.nostra.mcalert.client;
 
 import io.github.nostra.mcalert.MaclertTab;
 import io.github.nostra.mcalert.config.AlertEndpointConfig;
+import io.github.nostra.mcalert.exception.McConfigurationException;
 import io.github.nostra.mcalert.model.AlertModel;
 import io.github.nostra.mcalert.model.AlertType;
 import io.github.nostra.mcalert.model.FiringAlertMeta;
@@ -45,11 +46,16 @@ public class SingleEndpointPoller {
     private boolean active = true;
     private Map<String, FiringAlertMeta> firing = new HashMap<>();
     private FiringAlertMeta[] firingAlerts = new FiringAlertMeta[0];
-    private String resourceKey;
+    ///  Set the configuration key used for this poller, used as title for tabs and such
+    private final String resourceKey;
     /// Tab is the tab pane the alert belongs to
     private MaclertTab tab;
 
-    public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config, AlertCaller caller) {
+    public SingleEndpointPoller(String resourceKey, AlertEndpointConfig.AlertEndpoint config, AlertCaller caller) {
+        if ( resourceKey == null ) {
+            throw new McConfigurationException("Configuration trouble, expected resource key, but it was null");
+        }
+        this.resourceKey = resourceKey;
         this.caller = caller;
         this.watchdogAlertNames = config.watchdogAlerts();
         this.namesToIgnore = config.ignoreAlerts();
@@ -62,8 +68,8 @@ public class SingleEndpointPoller {
                         .putIfAbsent(alertName, new FiringAlertMeta(resourceKey,alertName, 0, null, AlertType.INACTIVE, "")));
     }
 
-    public SingleEndpointPoller(AlertEndpointConfig.AlertEndpoint config) {
-        this(config, createRestClient(config).build(AlertCaller.class));
+    public SingleEndpointPoller(String resourceKey, AlertEndpointConfig.AlertEndpoint config) {
+        this(resourceKey, config, createRestClient(config).build(AlertCaller.class));
     }
 
     private static RestClientBuilder createRestClient(AlertEndpointConfig.AlertEndpoint config) {
@@ -320,11 +326,6 @@ public class SingleEndpointPoller {
             namesToIgnore.add(name);
         }
         return true;
-    }
-
-    ///  Set the configuration key used for this poller, used as title for tabs and such
-    void setResourceKey(String resourceKey) {
-        this.resourceKey = resourceKey;
     }
 
     public void setTab(MaclertTab tab) {
