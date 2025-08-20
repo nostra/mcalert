@@ -16,6 +16,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,9 +58,19 @@ public class ShellCommandListener implements PropertyChangeListener {
             EndpointCallEnum collatedStatus = (EndpointCallEnum) evt.getNewValue();
             callShellWith( collatedStatus);
         } else if ("firingAlerts".equals(evt.getPropertyName())) {
-            FiringAlertMeta[] alerts = (FiringAlertMeta[]) evt.getNewValue();
+            FiringAlertMeta[] newValue = (FiringAlertMeta[]) evt.getNewValue();
+            FiringAlertMeta[] oldValue = (FiringAlertMeta[]) evt.getOldValue();
+            Set<String> oldAlertNames = namesFrom( oldValue );
+            Set<String> newAlertNames = namesFrom( newValue );
+            if ( oldAlertNames.containsAll(newAlertNames)) {
+                logger.trace("Not sending change event, as nothing is changed");
+                return;
+            }
+            // Remove alert already notified
+            newAlertNames.removeAll(oldAlertNames);
 
-            Stream.of(alerts)
+            Stream.of(newValue)
+                    .filter( meta -> newAlertNames.contains(meta.name()))
                     .collect(Collectors.toMap(
                             FiringAlertMeta::name,
                             Function.identity(),
@@ -71,6 +82,12 @@ public class ShellCommandListener implements PropertyChangeListener {
         } else {
             logger.warn("Got unexpected event {}", evt.getPropertyName());
         }
+    }
+
+    private Set<String> namesFrom(FiringAlertMeta[] meta) {
+        return meta == null
+                ? Set.of()
+                : Stream.of(meta).map(FiringAlertMeta::name).collect(Collectors.toSet());
     }
 
 

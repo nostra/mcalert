@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -128,7 +127,7 @@ public class SingleEndpointPoller {
                                 .map(fam -> fam.resourceKey() + "." + fam.name()+"."+fam.alertType().name())
                                 .peek(aname -> {
                                     if ( aname == null ) {
-                                        log.error("MISSING NAME. Current alerts: "+currentAlerts);
+                                        log.error("MISSING NAME. Current alerts: {}", currentAlerts);
                                     }
                                 })
                                 .collect(Collectors.toSet()));
@@ -195,22 +194,9 @@ public class SingleEndpointPoller {
     }
 
     public void firePropertyChange( String name, FiringAlertMeta[]  oldValue, FiringAlertMeta[]  newValue ) {
-        Set<String> oldAlertNames = namesFrom( oldValue );
-        Set<String> newAlertNames = namesFrom( newValue );
-        if ( oldAlertNames.size() == newAlertNames.size() &&
-                oldAlertNames.containsAll(newAlertNames)) {
-            log.trace("Not sending change event, as nothing is changed");
-            return;
-        }
-        log.trace("Something is changed");
         firePropertyChange(name, (Object) oldValue, (Object) newValue );
     }
 
-    private Set<String> namesFrom(FiringAlertMeta[] meta) {
-        return meta == null
-                ? Set.of()
-                : Stream.of(meta).map(FiringAlertMeta::name).collect(Collectors.toUnmodifiableSet());
-    }
 
     public void firePropertyChange( String name, Object oldValue, Object newValue ) {
         PropertyChangeEvent event = new PropertyChangeEvent(this, name, oldValue, newValue);

@@ -10,6 +10,7 @@ import static io.github.nostra.mcalert.client.EndpointCallEnum.SUCCESS;
 import static io.github.nostra.mcalert.client.EndpointCallEnum.UNKNOWN_FAILURE;
 import io.github.nostra.mcalert.config.AlertEndpointConfig;
 import io.github.nostra.mcalert.exception.McConfigurationException;
+import io.netty.handler.timeout.TimeoutException;
 import io.quarkus.runtime.Shutdown;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
@@ -106,12 +107,16 @@ public class AlertResource {
                 logger.error("Bah - got a NPE, please fix", e );
                 status = FAILURE;
             } catch (Exception e) {
-                logger.info("Trouble calling prometheus. Masked exception ({}) is {}", e.getClass().getSimpleName(), e.getMessage());
-                if (e.getCause() instanceof ConnectException) {
+                logger.info("Trouble calling prometheus. Masked exception ({}) is {}", e.getClass().getSimpleName(), e.getMessage(),e);
+                if (e.getCause() == null ) {
+                    status = UNKNOWN_FAILURE;
+                } else if (e.getCause() instanceof ConnectException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof ServiceUnavailableException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof UnknownHostException) {
+                    status = OFFLINE;
+                } else if (e.getCause() instanceof TimeoutException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException) {
                     status = NO_ACCESS;
