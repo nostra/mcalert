@@ -121,7 +121,6 @@ public class SingleEndpointPoller {
             log.trace("Calling api endpoint for configuration {}. Got {} alerts", resourceKeyAsParam, currentAlerts.size());
 
             firePropertyChange("firingAlerts", firingAlerts, newFiringAlerts);
-            firingAlerts = newFiringAlerts;
             boolean toUpdate = false;
             if (anyChangesComparedToFiringAlerts( newFiringAlerts )) {
                 log.debug("New alert(s) triggered: {}",
@@ -135,6 +134,7 @@ public class SingleEndpointPoller {
                                 .collect(Collectors.toSet()));
                 toUpdate = true;
             }
+            firingAlerts = newFiringAlerts;
             if ( toUpdate && tab != null ) {
                 log.trace("Shall update tab {}", tab.getText());
                 tab.updateContentsOfTab(this);
@@ -197,8 +197,8 @@ public class SingleEndpointPoller {
     public void firePropertyChange( String name, FiringAlertMeta[]  oldValue, FiringAlertMeta[]  newValue ) {
         Set<String> oldAlertNames = namesFrom( oldValue );
         Set<String> newAlertNames = namesFrom( newValue );
-        if (oldAlertNames.containsAll(newAlertNames)
-        ) {
+        if ( oldAlertNames.size() == newAlertNames.size() &&
+                oldAlertNames.containsAll(newAlertNames)) {
             log.trace("Not sending change event, as nothing is changed");
             return;
         }
