@@ -97,12 +97,16 @@ public class ShellCommandListener implements PropertyChangeListener {
             return;
         }
         logger.debug("Firing to file {}",firingAlertMeta);
+        String descriptionOrType = firingAlertMeta.description();
+        if ( descriptionOrType == null || descriptionOrType.isEmpty()) {
+            descriptionOrType = firingAlertMeta.alertType().name();
+        }
         String[] cmd = new String[]{
                 shellCommand,
                 "alert",
                 firingAlertMeta.resourceKey(),
                 firingAlertMeta.name(),
-                firingAlertMeta.description()
+                descriptionOrType
         };
         processExec(cmd);
     }

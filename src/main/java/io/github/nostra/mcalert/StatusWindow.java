@@ -2,6 +2,7 @@ package io.github.nostra.mcalert;
 
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.client.SingleEndpointPoller;
+import io.quarkus.runtime.Quarkus;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -16,10 +17,12 @@ import java.util.concurrent.Semaphore;
 public class StatusWindow extends Application {
     private static final Logger logger = LoggerFactory.getLogger(StatusWindow.class);
     private static StatusWindow instance;
+    private static boolean noTray;
     private Stage primaryStage;
     private static final Semaphore blockForStart = new Semaphore(1);
 
-    public static void doIt() {
+    public static void doIt(boolean noTray) {
+        StatusWindow.noTray = noTray;
         blockForStart.acquireUninterruptibly();
         launch();
     }
@@ -35,6 +38,15 @@ public class StatusWindow extends Application {
         this.primaryStage = primaryStage;
         Platform.setImplicitExit(false);
         primaryStage.setTitle("Firing alerts");
+        primaryStage.setOnCloseRequest(event -> {
+            if ( noTray ) {
+                Platform.exit();
+                Quarkus.asyncExit();
+                System.exit(0); // Optional: ensures JVM exits
+            }
+            // To ignore: event.consume();
+        });
+
         blockForStart.release();
     }
 
@@ -91,6 +103,5 @@ public class StatusWindow extends Application {
 
     public static void blockUntilStarted() {
         blockForStart.acquireUninterruptibly();
-        blockForStart.release();
     }
 }

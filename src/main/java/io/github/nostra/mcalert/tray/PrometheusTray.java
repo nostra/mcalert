@@ -69,6 +69,9 @@ public class PrometheusTray implements PropertyChangeListener {
         logger.info("Shutdown-hook triggered");
         alertResource.removePropertyChangeListener(this);
         SwingUtilities.invokeLater(this::removeIconFromTray);
+        mutex.release();
+        Quarkus.asyncExit();
+        System.exit(0);
     }
 
     private void removeIconFromTray() {

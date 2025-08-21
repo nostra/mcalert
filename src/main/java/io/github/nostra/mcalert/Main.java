@@ -34,7 +34,7 @@ public class Main implements QuarkusApplication {
                 || Set.of(args).contains("--no-tray")
                 || System.getProperty("NO_TRAY") != null
                 || !java.awt.SystemTray.isSupported();
-        new Thread(() -> StatusWindow.doIt()).start();
+        new Thread(() -> StatusWindow.doIt(reallyNoTray)).start();
 
         Semaphore mutex =  mcTrayService.startServices( reallyNoTray );
 

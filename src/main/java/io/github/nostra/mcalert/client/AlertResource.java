@@ -13,6 +13,7 @@ import io.github.nostra.mcalert.exception.McConfigurationException;
 import io.netty.handler.timeout.TimeoutException;
 import io.quarkus.runtime.Shutdown;
 import io.quarkus.scheduler.Scheduled;
+import io.vertx.core.impl.NoStackTraceTimeoutException;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotAllowedException;
@@ -117,6 +118,8 @@ public class AlertResource {
                 } else if (e.getCause() instanceof UnknownHostException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof TimeoutException) {
+                    status = OFFLINE;
+                } else if (e.getCause() instanceof NoStackTraceTimeoutException) {
                     status = OFFLINE;
                 } else if (e.getCause() instanceof NotAllowedException || e.getCause() instanceof NotAuthorizedException) {
                     status = NO_ACCESS;
