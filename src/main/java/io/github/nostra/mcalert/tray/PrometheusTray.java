@@ -35,6 +35,7 @@ public class PrometheusTray implements PropertyChangeListener {
     private final Semaphore mutex = new Semaphore(1);
 
     private final AlertResource alertResource;
+    private boolean started = false;
 
     @Inject
     public PrometheusTray( AlertResource alertResource) {
@@ -43,8 +44,9 @@ public class PrometheusTray implements PropertyChangeListener {
 
     public Semaphore start() {
         logger.info("Starting GUI...");
+        started = true;
         try {
-            mutex.acquire();
+            mutex.acquireUninterruptibly();
             okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/pulse-line.png")));
             circleImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/circle-line.png")));
             failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/bug-line.png")));
@@ -54,8 +56,6 @@ public class PrometheusTray implements PropertyChangeListener {
 
         } catch (IOException e) {
             throw new McException("Could not initialize", e);
-        } catch (InterruptedException _) {
-            Thread.currentThread().interrupt();
         }
 
         alertResource.addPropertyChangeListener(this);
@@ -66,12 +66,18 @@ public class PrometheusTray implements PropertyChangeListener {
 
     @Shutdown
     void shutdown() {
-        logger.info("Shutdown-hook triggered");
+        logger.info("Shutdown-hook triggered (PrometheusTray)");
+        /*
         alertResource.removePropertyChangeListener(this);
-        SwingUtilities.invokeLater(this::removeIconFromTray);
+        try {
+            SwingUtilities.invokeAndWait(this::removeIconFromTray);
+        } catch (InterruptedException | InvocationTargetException _) {
+            // Ignore
+        }
         mutex.release();
         Quarkus.asyncExit();
-        System.exit(0);
+
+         */
     }
 
     private void removeIconFromTray() {

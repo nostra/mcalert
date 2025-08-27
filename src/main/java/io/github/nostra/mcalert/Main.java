@@ -41,7 +41,6 @@ public class Main implements QuarkusApplication {
         logger.info("Execute done, now block for exit");
         mutex.acquireUninterruptibly();
         logger.info("Exiting");
-        mutex.release();
 
         return 0;
     }

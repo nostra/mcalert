@@ -3,6 +3,7 @@ package io.github.nostra.mcalert;
 import io.github.nostra.mcalert.tray.NoTray;
 import io.github.nostra.mcalert.tray.PrometheusTray;
 import io.github.nostra.mcalert.tray.ShellCommandListener;
+import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.Shutdown;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -38,6 +39,9 @@ public class McTrayService {
     @Shutdown
     void shutdown() {
         log.info("Shutdown-hook triggering (McService)");
+        Quarkus.asyncExit();
+
+        // System.exit(0);
     }
 
     public Semaphore startServices(boolean noTray) {

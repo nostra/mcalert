@@ -49,6 +49,7 @@ public class ShellCommandListener implements PropertyChangeListener {
 
     @Shutdown
     void shutdown() {
+        logger.warn("Shutdown (cli)");
         alertResource.removePropertyChangeListener(this);
     }
 

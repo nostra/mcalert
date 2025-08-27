@@ -39,10 +39,11 @@ public class StatusWindow extends Application {
         Platform.setImplicitExit(false);
         primaryStage.setTitle("Firing alerts");
         primaryStage.setOnCloseRequest(event -> {
+            blockForStart.release();
             if ( noTray ) {
-                Platform.exit();
                 Quarkus.asyncExit();
-                System.exit(0); // Optional: ensures JVM exits
+                Platform.exit();
+                System.exit(1);
             }
             // To ignore: event.consume();
         });

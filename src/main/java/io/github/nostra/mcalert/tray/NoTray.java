@@ -2,6 +2,8 @@ package io.github.nostra.mcalert.tray;
 
 import io.github.nostra.mcalert.StatusWindow;
 import io.github.nostra.mcalert.client.AlertResource;
+import io.quarkus.runtime.Quarkus;
+import io.quarkus.runtime.Shutdown;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -20,19 +22,21 @@ public class NoTray {
         this.alertResource = alertResource;
     }
 
+    @Shutdown
+    void shutdown() {
+        logger.info("Shutdown-hook triggering (NoTray)");
+
+        mutex.release();
+        Quarkus.asyncExit();
+    }
+
     public Semaphore start() {
         logger.info("Starting GUI...");
-        try {
-            mutex.acquire();
+        mutex.acquireUninterruptibly();
 
-            StatusWindow.blockUntilStarted();
-            StatusWindow.getInstance().show(alertResource);
-
-        } catch (InterruptedException _) {
-            Thread.currentThread().interrupt();
-        }
+        StatusWindow.blockUntilStarted();
+        StatusWindow.getInstance().show(alertResource);
 
         return mutex;
     }
-
 }
