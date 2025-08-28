@@ -34,7 +34,6 @@ public class StatusWindow extends Application {
     @Override
     public void start(Stage primaryStage) {
         logger.info("Starting status window");
-        instance = this;
         this.primaryStage = primaryStage;
         Platform.setImplicitExit(false);
         primaryStage.setTitle("Firing alerts");
@@ -47,7 +46,7 @@ public class StatusWindow extends Application {
             }
             // To ignore: event.consume();
         });
-
+        instance = this;
         blockForStart.release();
     }
 

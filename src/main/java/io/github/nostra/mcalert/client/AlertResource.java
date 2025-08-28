@@ -105,10 +105,14 @@ public class AlertResource {
                     status = FAILURE;
                 }
             } catch (NullPointerException e) {
-                logger.error("Bah - got a NPE, please fix", e );
-                status = FAILURE;
+                if (!running) {
+                    status =  ALL_DEACTIVATED;
+                } else {
+                    logger.error("Bah - got a NPE, please fix", e );
+                    status = FAILURE;
+                }
             } catch (Exception e) {
-                logger.info("Trouble calling prometheus. Masked exception ({}) is {}", e.getClass().getSimpleName(), e.getMessage(),e);
+                logger.info("Trouble calling prometheus. Masked exception ({}) is {}", e.getClass().getSimpleName(), e.getMessage());
                 if (e.getCause() == null ) {
                     status = UNKNOWN_FAILURE;
                 } else if (e.getCause() instanceof ConnectException) {

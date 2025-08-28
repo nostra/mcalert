@@ -32,9 +32,10 @@ public class NoTray {
 
     public Semaphore start() {
         logger.info("Starting GUI...");
+        StatusWindow.blockUntilStarted();
         mutex.acquireUninterruptibly();
 
-        StatusWindow.blockUntilStarted();
+
         StatusWindow.getInstance().show(alertResource);
 
         return mutex;
