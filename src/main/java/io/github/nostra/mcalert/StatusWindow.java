@@ -23,7 +23,6 @@ public class StatusWindow extends Application {
 
     public static void doIt(boolean noTray) {
         StatusWindow.noTray = noTray;
-        blockForStart.acquireUninterruptibly();
         launch();
     }
 

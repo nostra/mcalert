@@ -27,13 +27,13 @@ public class Main implements QuarkusApplication {
 
     @Override
     public int run(String... args) {
-        logger.error("Got args " + List.of(args));
-        logger.error("Value of noTray: " + noTray);
+        logger.info("Got args " + List.of(args));
         // For some reason, the "noTray" variable is not correctly populated
         boolean reallyNoTray = noTray
                 || Set.of(args).contains("--no-tray")
                 || System.getProperty("NO_TRAY") != null
                 || !java.awt.SystemTray.isSupported();
+        StatusWindow.blockUntilStarted();
         new Thread(() -> StatusWindow.doIt(reallyNoTray)).start();
 
         Semaphore mutex =  mcTrayService.startServices( reallyNoTray );
