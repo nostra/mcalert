@@ -38,9 +38,6 @@ public class AlertMenuItem extends MenuItem implements PropertyChangeListener {
         FiringAlertMeta[] keyAlerts = Arrays.stream(alerts == null ? new FiringAlertMeta[0] : alerts)
                 .filter(a -> key.equals(a.resourceKey()))
                 .toArray(FiringAlertMeta[]::new);
-        if ( alerts != null && keyAlerts.length != alerts.length ) { // TODO Remove later
-            log.error("Good thing I check where the alert comes from");
-        }
 
         // Check if we have exactly one alert and it's DEACTIVATED
         if (keyAlerts.length == 1 && keyAlerts[0].alertType() == AlertType.DEACTIVATED) {

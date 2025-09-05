@@ -11,7 +11,6 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.VBox;
-import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,60 +42,55 @@ public class MaclertTab extends Tab {
 
     protected ListView<Item> createListView(SingleEndpointPoller sep, ObservableList<Item> items) {
         ListView<Item> listView = new ListView<>(items);
-        listView.setCellFactory(new Callback<>() {
+        listView.setCellFactory(_ -> new ListCell<>() {
             @Override
-            public ListCell<Item> call(ListView<Item> param) {
-                return new ListCell<>() {
-                    @Override
-                    protected void updateItem(Item item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (item != null) {
-                            updateNonEmptyItem(item);
-                        }
-                    }
+            protected void updateItem(Item item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item != null) {
+                    updateNonEmptyItem(item);
+                }
+            }
 
-                    private void updateNonEmptyItem(Item item) {
-                        CheckBox checkBox = createCheckBox(item);
-                        setupCheckBoxListener(checkBox, item);
-                        setGraphic(checkBox);
-                        applyAgeBasedStyle(checkBox, item);
-                    }
+            private void updateNonEmptyItem(Item item) {
+                CheckBox checkBox = createCheckBox(item);
+                setupCheckBoxListener(checkBox, item);
+                setGraphic(checkBox);
+                applyAgeBasedStyle(checkBox, item);
+            }
 
-                    private CheckBox createCheckBox(Item item) {
-                        CheckBox checkBox = new CheckBox(item.getName());
-                        checkBox.setSelected(item.isSelected());
-                        if (sep.isWatchDogAlert(item.getName())) {
-                            checkBox.setDisable(true);
-                        }
-                        return checkBox;
-                    }
+            private CheckBox createCheckBox(Item item) {
+                CheckBox checkBox = new CheckBox(item.getName());
+                checkBox.setSelected(item.isSelected());
+                if (sep.isWatchDogAlert(item.getName())) {
+                    checkBox.setDisable(true);
+                }
+                return checkBox;
+            }
 
-                    private void setupCheckBoxListener(CheckBox checkBox, Item item) {
-                        checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-                            item.setSeenSecondsAgo(0);
-                            if (sep.toggleIgnoreOn(item.getName())) {
-                                item.setSelected(newVal);
-                            }
-                        });
+            private void setupCheckBoxListener(CheckBox checkBox, Item item) {
+                checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                    item.setSeenSecondsAgo(0);
+                    if (sep.toggleIgnoreOn(item.getName())) {
+                        item.setSelected(newVal);
                     }
+                });
+            }
 
-                    private void applyAgeBasedStyle(CheckBox checkBox, Item item) {
-                        if (item.getSeenSecondsAgo() > 40_000) {
-                            checkBox.setStyle("""
-                                -fx-background-color: rgb(255, 204, 203);
-                                -fx-strikethrough: true;
-                                """.stripIndent());
-                        } else if (item.getSeenSecondsAgo() > 10) {
-                            // TODO If this is a missing watchdog alert, the color is misleading
-                            int maxSeconds = 2000;
-                            int seenSecondsAgo = Math.min((int)item.getSeenSecondsAgo(), maxSeconds);
-                            int greenIntensity = Math.max(255 - (seenSecondsAgo * 255 / maxSeconds), 125);
-                            checkBox.setStyle(String.format("-fx-background-color: rgb(0, %d, 0);", greenIntensity));
-                        } else {
-                            checkBox.setStyle("-fx-background-color: white;");
-                        }
-                    }
-                };
+            private void applyAgeBasedStyle(CheckBox checkBox, Item item) {
+                if (item.getSeenSecondsAgo() > 40_000) {
+                    checkBox.setStyle("""
+                            -fx-background-color: rgb(255, 204, 203);
+                            -fx-strikethrough: true;
+                            """.stripIndent());
+                } else if (item.getSeenSecondsAgo() > 10) {
+                    // TODO If this is a missing watchdog alert, the color is misleading
+                    int maxSeconds = 2000;
+                    int seenSecondsAgo = Math.min((int) item.getSeenSecondsAgo(), maxSeconds);
+                    int greenIntensity = Math.max(255 - (seenSecondsAgo * 255 / maxSeconds), 125);
+                    checkBox.setStyle(String.format("-fx-background-color: rgb(0, %d, 0);", greenIntensity));
+                } else {
+                    checkBox.setStyle("-fx-background-color: white;");
+                }
             }
         });
         return listView;
@@ -105,7 +99,7 @@ public class MaclertTab extends Tab {
     /// Initialization method
     public MaclertTab withEndpointPoller(SingleEndpointPoller poller) {
         updateContentsOfTab(poller);
-        poller.setTab( this );
+        poller.setTab(this);
         return this;
     }
 

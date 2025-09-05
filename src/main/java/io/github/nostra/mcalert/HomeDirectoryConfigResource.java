@@ -1,64 +1,40 @@
 package io.github.nostra.mcalert;
 
-import io.quarkus.runtime.annotations.StaticInitSafe;
+import io.github.nostra.mcalert.exception.McConfigurationException;
+import io.smallrye.config.ConfigSourceContext;
+import io.smallrye.config.ConfigSourceFactory;
+import io.smallrye.config.PropertiesConfigSource;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.Collections;
+import java.util.OptionalInt;
 
-@StaticInitSafe
-public class HomeDirectoryConfigResource implements ConfigSource {
+/// See https://quarkus.io/guides/config-extending-support#example
+public class HomeDirectoryConfigResource implements ConfigSourceFactory {
     private static final Logger logger = LoggerFactory.getLogger(HomeDirectoryConfigResource.class);
 
-    private static final Map<String, String> configuration = new HashMap<>();
-
-    static {
-        loadProperties();
-    }
-
-    private static void loadProperties() {
-        String propertiesPath = null;
-        try {
-            Properties properties = new Properties();
-            // file location is assumed to be in user's home directory here
-            propertiesPath = System.getProperty("user.home") + "/.mcalert.properties";
-            try (var input = Files.newInputStream(Path.of(propertiesPath))) {
-                properties.load(input);
+    @Override
+    public Iterable<ConfigSource> getConfigSources(ConfigSourceContext configSourceContext) {
+        String userHome = System.getProperty("user.home");
+        if (userHome != null) {
+            File configFile = new File(userHome, ".mcalert.properties");
+            if (configFile.exists()) {
+                try {
+                    return Collections.singletonList(new PropertiesConfigSource(configFile.toURI().toURL()));
+                } catch (IOException e) {
+                    throw new McConfigurationException("Unexepected", e);
+                }
             }
-            properties.forEach((key, value) -> configuration.put("" + key, "" + value));
-        } catch (IOException _) {
-            logger.info("Could not find a configuration file name {}", propertiesPath);
         }
-    }
-
-    /**
-     * Number comes from tutorial:
-     * https://quarkus.io/guides/config-extending-support#example
-     */
-    @Override
-    public int getOrdinal() {
-        return 275;
+        return Collections.emptyList();
     }
 
     @Override
-    public Set<String> getPropertyNames() {
-        return configuration.keySet();
+    public OptionalInt getPriority() {
+        return OptionalInt.of(290);
     }
-
-    @Override
-    public String getValue(String propertyName) {
-        return configuration.get(propertyName);
-    }
-
-    @Override
-    public String getName() {
-        return HomeDirectoryConfigResource.class.getSimpleName();
-    }
-}
+  }
