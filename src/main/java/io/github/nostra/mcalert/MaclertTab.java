@@ -118,4 +118,17 @@ public class MaclertTab extends Tab {
         vbox.getChildren().add(listView);
         Platform.runLater(() -> setContent(vbox));
     }
+
+    public void updateMarker(boolean success) {
+        int space = getText().indexOf(" ");
+        if ( success && space > 0 ) {
+            Platform.runLater(() -> setText(getText().substring(space+1)));
+        }
+        if ( !success && space < 0 ) {
+            // Alternatives would be
+            //int emojiCode = 0x1F4A2; // Unicode for anger symbol
+            //String emoji = new String(Character.toChars(emojiCode));
+            Platform.runLater(() ->setText("* "+getText()));
+        }
+    }
 }

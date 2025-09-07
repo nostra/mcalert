@@ -137,6 +137,12 @@ public class SingleEndpointPoller {
             if ( toUpdate && tab != null ) {
                 log.trace("Shall update tab {}", tab.getText());
                 tab.updateContentsOfTab(this);
+                if ( result.status().equalsIgnoreCase("success") && result.noAlerts()) {
+                    tab.updateMarker( true );
+                } else {
+                    tab.updateMarker( false );
+                }
+
             }
             return result;
         } catch (Exception e) {
