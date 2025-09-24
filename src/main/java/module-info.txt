@@ -1,3 +1,4 @@
+// Rename file to .java in order to activate
 module io.github.nostra.mcalert {
     requires com.fasterxml.jackson.annotation;
     requires info.picocli;
