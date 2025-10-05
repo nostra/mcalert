@@ -46,7 +46,7 @@ public class AlertMenuItem extends MenuItem implements PropertyChangeListener {
         }
 
         // Check if we have any active alerts
-        boolean hasActiveAlerts = Arrays.stream(keyAlerts)
+        boolean hasActiveAlerts = keyAlerts.length > 0 && Arrays.stream(keyAlerts)
                 .anyMatch(alert -> alert.alertType() == AlertType.ACTIVE);
 
         if (hasActiveAlerts) {

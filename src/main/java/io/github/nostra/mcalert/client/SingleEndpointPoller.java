@@ -146,7 +146,7 @@ public class SingleEndpointPoller {
             }
             return result;
         } catch (Exception e) {
-            FiringAlertMeta[] errorAlerts = {new FiringAlertMeta(resourceKey, resourceKeyAsParam, -2, Instant.now(), AlertType.INACTIVE, "")};
+            FiringAlertMeta[] errorAlerts = {new FiringAlertMeta(resourceKey, resourceKeyAsParam, -2, Instant.now(), AlertType.ACTIVE, "")};
             firePropertyChange("firingAlerts", firingAlerts, errorAlerts);
             firingAlerts = errorAlerts;
             throw e;
