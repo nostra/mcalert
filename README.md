@@ -17,10 +17,10 @@ deactivated. You decide your own names in the configuration.
 Alert window:
 ![Example alert window](usage-example.png)
 Elements in the window:
-- Alerts with a checkmark is ignored
+- Alerts with a checkmark are ignored
 - Alerts with a white background is a firing alert
 - A green background signifies that an alert has been observed, but has not fired in while
-- Red background is an alert that is configured to be ignored, but it not yet been seen
+- Red background is an alert configured to be ignored, but it not yet been seen
 
 The settings are not persisted over restarts. However, during build, the configuration file
 gets picked up by Quarkus functionality, and built as an appliction default. Be aware of this
@@ -28,7 +28,7 @@ when having a configuration file in `$HOME`.
 
 # Dependencies
 
-You need jdk-24 with jpackage. The rest of the dependencies should get pulled in.
+You need jdk-25 with jpackage. The rest of the dependencies should get pulled in.
 
 If running on Gnome, you need the
 [Tray Icons: Reloaded](https://extensions.gnome.org/extension/2890/tray-icons-reloaded/)
