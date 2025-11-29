@@ -74,6 +74,11 @@ In your script, the easiest is to differntiate between SUCCESS and other values.
 %dev.mcalert.prometheus.command-line.shell-command=/full-path-to/some-shell.sh
 ```
 
+**Darkmode** can be enabled by setting a configuration key:
+
+```
+mcalert.prometheus.darkmode=true
+```
 
 
 ### Use grafana as Prometheus proxy

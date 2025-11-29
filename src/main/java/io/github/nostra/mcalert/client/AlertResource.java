@@ -81,6 +81,10 @@ public class AlertResource {
         return datasource.isEmpty() || datasource.get().trim().isEmpty();
     }
 
+    public boolean isDarkModeActive() {
+        return alertEndpointConfig.darkmode().isPresent() && alertEndpointConfig.darkmode().get();
+    }
+
     /**
      * @return One failure means all fail
      */
@@ -93,7 +97,7 @@ public class AlertResource {
         for (var entry : alertEndpointMap.entrySet()) {
             try {
                 if ( entry == null || entry.getValue() == null ) {
-                    throw new RuntimeException("Null for entry-value. Entry as such is "+entry);
+                    throw new McConfigurationException("Null for entry-value. Entry as such is "+entry);
                 }
                 var prom = entry.getValue().callPrometheus(entry.getKey());
                 if ( prom.status().equalsIgnoreCase("success") && prom.noAlerts()) {

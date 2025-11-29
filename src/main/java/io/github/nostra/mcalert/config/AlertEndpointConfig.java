@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface AlertEndpointConfig {
     Map<String, AlertEndpoint> endpoints();
     Optional<CommandLine> commandLine();
+    Optional<Boolean> darkmode();
 
     interface AlertEndpoint {
         URI uri();

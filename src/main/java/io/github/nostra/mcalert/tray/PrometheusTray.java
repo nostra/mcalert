@@ -15,6 +15,9 @@ import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.ImageFilter;
+import java.awt.image.RGBImageFilter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -35,7 +38,6 @@ public class PrometheusTray implements PropertyChangeListener {
     private final Semaphore mutex = new Semaphore(1);
 
     private final AlertResource alertResource;
-    private boolean started = false;
 
     @Inject
     public PrometheusTray( AlertResource alertResource) {
@@ -44,15 +46,16 @@ public class PrometheusTray implements PropertyChangeListener {
 
     public Semaphore start() {
         logger.info("Starting GUI...");
-        started = true;
         try {
             mutex.acquireUninterruptibly();
-            okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/pulse-line.png")));
-            circleImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/circle-line.png")));
-            failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/bug-line.png")));
-            offlineImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/cloud-off-fill.png")));
-            noAccessImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/prohibited-line.png")));
-            deactivatedImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/information-off-line.png")));
+            boolean darkMode = alertResource.isDarkModeActive();
+
+            okImage = loadAndTransform("/images/pulse-line.png", darkMode);
+            circleImage = loadAndTransform("/images/circle-line.png", darkMode);
+            failureImage = loadAndTransform("/images/bug-line.png", darkMode);
+            offlineImage = loadAndTransform("/images/cloud-off-fill.png", darkMode);
+            noAccessImage = loadAndTransform("/images/prohibited-line.png", darkMode);
+            deactivatedImage = loadAndTransform("/images/information-off-line.png", darkMode);
 
         } catch (IOException e) {
             throw new McException("Could not initialize", e);
@@ -159,6 +162,26 @@ public class PrometheusTray implements PropertyChangeListener {
             case ALL_DEACTIVATED -> SwingUtilities.invokeLater(() -> trayIcon.setImage(deactivatedImage));
             case UNKNOWN_FAILURE, FAILURE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(failureImage));
         }
+    }
+
+    private Image loadAndTransform(String path, boolean darkMode) throws IOException {
+        Image image = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream(path)));
+        if (darkMode) {
+            return invertImage(image);
+        }
+        return image;
+    }
+
+    private Image invertImage(Image image) {
+        ImageFilter filter = new RGBImageFilter() {
+            @Override
+            public int filterRGB(int x, int y, int rgb) {
+                // Invert colors (white <-> black) while preserving the alpha channel
+                // Mask out the alpha (0xFF000000) and combine it with the inverted RGB components
+                return (rgb & 0xFF000000) | (~rgb & 0x00FFFFFF);
+            }
+        };
+        return Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(image.getSource(), filter));
     }
 
     @Override
