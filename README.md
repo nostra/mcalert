@@ -16,6 +16,7 @@ deactivated. You decide your own names in the configuration.
 
 Alert window:
 ![Example alert window](usage-example.png)
+
 Elements in the window:
 - Alerts with a checkmark are ignored
 - Alerts with a white background is a firing alert
@@ -42,13 +43,18 @@ cd target
 jpackage --verbose --name mcalert --input quarkus-app \
     --description "Read Prometheus endpoints and show status as toolbar icon" \
     --icon ../mcalert.icns \
+    --java-options "-Dapple.awt.application.appearance=system" \
     --main-jar quarkus-run.jar 
 ```
 
 ## Configure
 
 Create a file in your home directory named `$HOME/.mcalert.properties` and
-configure endpoints. You can have as many endpoints as you like:
+configure endpoints. Examples can be found in the 
+[application.properties](src%2Fmain%2Fresources%2Fapplication.properties)
+file.
+
+You can have as many endpoints as you like:
 ```
 mcalert.prometheus.endpoints.<NAME>.uri=http://prometheus.somewhere.local.gd:9090/api/v1/alerts
 mcalert.prometheus.endpoints.<NAME>.ignore-alerts=CPUThrottlingHigh,KubeControllerManagerDown
@@ -66,15 +72,21 @@ mcalert.prometheus.endpoints<NAME>.header[0].content=Basic dXNlcm5hbWU6cGFzc3dvc
 
 You can add a shell command to trigger upon change of alert status. First parameter is
 for now always `status`, and the second parameter is the value from the enum
-[src/main/java/io/github/nostra/mcalert/client/EndpointCallEnum.java]
+[src/main/java/io/github/nostra/mcalert/client/EndpointCallEnum.java](src/main/java/io/github/nostra/mcalert/client/EndpointCallEnum.java)
 
-In your script, the easiest is to differntiate between SUCCESS and other values.
+In your script, the easiest is to differentiate between SUCCESS and other values.
 
 ```
 %dev.mcalert.prometheus.command-line.shell-command=/full-path-to/some-shell.sh
 ```
 
-**Darkmode** can be enabled by setting a configuration key:
+The application tries to detect **darkmode** automatically. For this to work on MacOS, you
+need to add a system propert to the java application, like this:
+```
+java -Dapple.awt.application.appearance=system -jar target/quarkus-app/quarkus-run.jar
+```
+
+You can also set the desired mode by using the configuration key:
 
 ```
 mcalert.prometheus.darkmode=true

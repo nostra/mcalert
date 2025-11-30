@@ -81,8 +81,9 @@ public class AlertResource {
         return datasource.isEmpty() || datasource.get().trim().isEmpty();
     }
 
-    public boolean isDarkModeActive() {
-        return alertEndpointConfig.darkmode().isPresent() && alertEndpointConfig.darkmode().get();
+    /// @return Value which indicates that dark mode is configured
+    public Optional<Boolean> isDarkModeActive() {
+        return alertEndpointConfig.darkmode();
     }
 
     /**

@@ -48,14 +48,13 @@ public class PrometheusTray implements PropertyChangeListener {
         logger.info("Starting GUI...");
         try {
             mutex.acquireUninterruptibly();
-            boolean darkMode = alertResource.isDarkModeActive();
 
-            okImage = loadAndTransform("/images/pulse-line.png", darkMode);
-            circleImage = loadAndTransform("/images/circle-line.png", darkMode);
-            failureImage = loadAndTransform("/images/bug-line.png", darkMode);
-            offlineImage = loadAndTransform("/images/cloud-off-fill.png", darkMode);
-            noAccessImage = loadAndTransform("/images/prohibited-line.png", darkMode);
-            deactivatedImage = loadAndTransform("/images/information-off-line.png", darkMode);
+            okImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/pulse-line.png")));
+            circleImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/circle-line.png")));
+            failureImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/bug-line.png")));
+            offlineImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/cloud-off-fill.png")));
+            noAccessImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/prohibited-line.png")));
+            deactivatedImage = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/images/information-off-line.png")));
 
         } catch (IOException e) {
             throw new McException("Could not initialize", e);
@@ -156,20 +155,27 @@ public class PrometheusTray implements PropertyChangeListener {
      void refreshTrayIconWith(EndpointCallEnum status) {
         switch (status) {
             case EMPTY -> logger.warn("Configuration error: No endpoints configured");
-            case FOUR_O_FOUR, OFFLINE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(offlineImage));
-            case SUCCESS -> SwingUtilities.invokeLater(() -> trayIcon.setImage(okImage));
-            case NO_ACCESS -> SwingUtilities.invokeLater(() -> trayIcon.setImage(noAccessImage));
-            case ALL_DEACTIVATED -> SwingUtilities.invokeLater(() -> trayIcon.setImage(deactivatedImage));
-            case UNKNOWN_FAILURE, FAILURE -> SwingUtilities.invokeLater(() -> trayIcon.setImage(failureImage));
+            case FOUR_O_FOUR, OFFLINE -> updateTrayIconImage(offlineImage);
+            case SUCCESS -> updateTrayIconImage(okImage);
+            case NO_ACCESS -> updateTrayIconImage(noAccessImage);
+            case ALL_DEACTIVATED -> updateTrayIconImage(deactivatedImage);
+            case UNKNOWN_FAILURE, FAILURE -> updateTrayIconImage(failureImage);
         }
     }
 
-    private Image loadAndTransform(String path, boolean darkMode) throws IOException {
-        Image image = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream(path)));
-        if (darkMode) {
-            return invertImage(image);
-        }
-        return image;
+    private void updateTrayIconImage(Image image) {
+        Platform.runLater(() -> updateTrayIconImageImpl(image));
+    }
+
+    /// Method to be called within platform thread
+    private void updateTrayIconImageImpl(Image image) {
+        boolean darkMode = alertResource.isDarkModeActive()
+                .orElseGet(() -> Platform.getPreferences().colorSchemeProperty().get() == javafx.application.ColorScheme.DARK);
+        Image adjustedImage = darkMode
+                ? invertImage(image)
+                : image;
+
+        SwingUtilities.invokeLater(() -> trayIcon.setImage(adjustedImage));
     }
 
     private Image invertImage(Image image) {
