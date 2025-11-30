@@ -150,10 +150,11 @@ Parameter to disable tray: `-Dquarkus.args=--no-tray`
 
 ## Test static file
 
-In order to test an endpoint the most easily, use jwebserver:
+In order to test an endpoint the most easily, use jwebserver
+(found in `$JAVA_HOME/bin/`):
 
 ```shell
-$$JAVA_HOME/bin/jwebserver -b localhost -p 9090 -d $PWD/src/test/resources 
+jwebserver -b localhost -p 9090 -d $PWD/src/test/resources 
 ```
 
 Open http://localhost:9090/

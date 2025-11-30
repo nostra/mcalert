@@ -176,9 +176,18 @@ public class PrometheusTray implements PropertyChangeListener {
         ImageFilter filter = new RGBImageFilter() {
             @Override
             public int filterRGB(int x, int y, int rgb) {
-                // Invert colors (white <-> black) while preserving the alpha channel
-                // Mask out the alpha (0xFF000000) and combine it with the inverted RGB components
-                return (rgb & 0xFF000000) | (~rgb & 0x00FFFFFF);
+                int alpha = rgb & 0xFF000000;
+                int r = (rgb >> 16) & 0xFF;
+                int g = (rgb >> 8) & 0xFF;
+                int b = rgb & 0xFF;
+
+                // Invert (255 - val) and dim to avoid harsh white
+                double scale = 0.85;
+                r = (int) ((255 - r) * scale);
+                g = (int) ((255 - g) * scale);
+                b = (int) ((255 - b) * scale);
+
+                return alpha | (r << 16) | (g << 8) | b;
             }
         };
         return Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(image.getSource(), filter));
