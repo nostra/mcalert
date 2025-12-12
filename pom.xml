@@ -228,7 +228,8 @@
             <id>linux-x64</id>
             <activation>
                 <os>
-                    <family>unix</family>
+                    <name>Linux</name>
+                    <arch>x86_64</arch>
                 </os>
             </activation>
             <properties>
