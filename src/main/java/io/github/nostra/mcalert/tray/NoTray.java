@@ -2,6 +2,7 @@ package io.github.nostra.mcalert.tray;
 
 import io.github.nostra.mcalert.StatusWindow;
 import io.github.nostra.mcalert.client.AlertResource;
+import io.github.nostra.mcalert.splash.SplashEventBus;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.Shutdown;
 import jakarta.inject.Inject;
@@ -34,7 +35,7 @@ public class NoTray {
         logger.info("Starting GUI...");
         StatusWindow.blockUntilStarted();
         mutex.acquireUninterruptibly();
-
+        SplashEventBus.requestClose();
 
         StatusWindow.getInstance().show(alertResource);
 

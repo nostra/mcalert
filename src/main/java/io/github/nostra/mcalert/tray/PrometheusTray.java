@@ -4,6 +4,7 @@ import io.github.nostra.mcalert.StatusWindow;
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.client.EndpointCallEnum;
 import io.github.nostra.mcalert.exception.McException;
+import io.github.nostra.mcalert.splash.SplashEventBus;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.Shutdown;
 import jakarta.inject.Inject;
@@ -63,23 +64,13 @@ public class PrometheusTray implements PropertyChangeListener {
         alertResource.addPropertyChangeListener(this);
         // sets up the tray icon (using awt code run on the swing thread).
         SwingUtilities.invokeLater(this::addIconToTray);
+        SwingUtilities.invokeLater(SplashEventBus::requestClose);
         return mutex;
     }
 
     @Shutdown
     void shutdown() {
         logger.info("Shutdown-hook triggered (PrometheusTray)");
-        /*
-        alertResource.removePropertyChangeListener(this);
-        try {
-            SwingUtilities.invokeAndWait(this::removeIconFromTray);
-        } catch (InterruptedException | InvocationTargetException _) {
-            // Ignore
-        }
-        mutex.release();
-        Quarkus.asyncExit();
-
-         */
     }
 
     private void removeIconFromTray() {
@@ -97,7 +88,7 @@ public class PrometheusTray implements PropertyChangeListener {
     private void addIconToTray() {
         trayIcon = new TrayIcon(circleImage);
         trayIcon.setImageAutoSize(true);
-        trayIcon.addActionListener(_ -> SwingUtilities.invokeLater(() -> alertResource.fireAndGetCollatedStatus()));
+        trayIcon.addActionListener(_ -> SwingUtilities.invokeLater(alertResource::fireAndGetCollatedStatus));
         trayIcon.setPopupMenu(constructTrayMenu());
         trayIcon.setToolTip("McAlert");
 

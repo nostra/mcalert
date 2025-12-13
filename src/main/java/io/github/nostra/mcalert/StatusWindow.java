@@ -2,6 +2,8 @@ package io.github.nostra.mcalert;
 
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.client.SingleEndpointPoller;
+import io.github.nostra.mcalert.splash.SplashEventBus;
+import io.github.nostra.mcalert.splash.SplashStage;
 import io.quarkus.runtime.Quarkus;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -34,6 +36,9 @@ public class StatusWindow extends Application {
     public void start(Stage primaryStage) {
         logger.info("Starting status window");
         this.primaryStage = primaryStage;
+        SplashStage splash = new SplashStage();
+        splash.show();
+
         Platform.setImplicitExit(false);
         primaryStage.setTitle("Firing alerts");
         primaryStage.setOnCloseRequest(event -> {
@@ -43,7 +48,7 @@ public class StatusWindow extends Application {
                 Platform.exit();
                 System.exit(1);
             }
-            // To ignore: event.consume();
+            SplashEventBus.requestClose();
         });
         instance = this;
         blockForStart.release();
