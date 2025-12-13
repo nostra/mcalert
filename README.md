@@ -162,7 +162,8 @@ quarkus extension add quarkus-scheduler
 java -jar target/quarkus-app/quarkus-run.jar 
 ```
 
-Parameter to disable tray: `-Dquarkus.args=--no-tray`
+Parameter to disable tray: `-Dquarkus.args=--no-tray` (or possibly just
+`--no-tray` YMWV).
 
 ## Test static file
 

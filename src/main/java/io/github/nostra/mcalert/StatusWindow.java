@@ -84,6 +84,7 @@ public class StatusWindow extends Application {
         tabPane.prefHeightProperty().bind(scene.heightProperty());
 
         primaryStage.setScene(scene);
+        primaryStage.sizeToScene();
         primaryStage.show();
     }
 

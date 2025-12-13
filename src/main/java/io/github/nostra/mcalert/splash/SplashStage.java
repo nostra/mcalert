@@ -4,7 +4,9 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Background;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -14,7 +16,7 @@ import java.util.Objects;
 public final class SplashStage extends Stage {
 
     public SplashStage() {
-        initStyle(StageStyle.UNDECORATED);
+        initStyle(StageStyle.TRANSPARENT);
         setAlwaysOnTop(true);
 
         Image image = new Image(Objects.requireNonNull(
@@ -28,9 +30,12 @@ public final class SplashStage extends Stage {
 
         VBox root = new VBox(10, imageView, new Text("Loading…"));
         root.setPadding(new Insets(12));
+        root.setBackground(Background.EMPTY);
 
         Scene scene = new Scene(root);
+        scene.setFill(Color.TRANSPARENT);
         setScene(scene);
+
         sizeToScene();
         centerOnScreen();
 
