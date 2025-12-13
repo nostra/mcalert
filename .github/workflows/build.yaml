@@ -1,7 +1,9 @@
 name: Build branch
 
 on:
-  push
+  push:
+    branches-ignore:
+      - 'mac*'
 
 jobs:
   build:
