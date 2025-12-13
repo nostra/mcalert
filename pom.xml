@@ -110,6 +110,16 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>io.github.nostra.mcalert.splash.MainApp</mainClass>
+                    <launcher>mcalert-splash</launcher>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>${maven-enforcer-plugin.version}</version>
@@ -196,6 +206,20 @@
             </properties>
         </profile>
 
+        <!-- macOS Apple Silicon (some JDKs report arm64 instead of aarch64) -->
+        <profile>
+            <id>mac-arm64</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>arm64</arch>
+                </os>
+            </activation>
+            <properties>
+                <javafx.platform>mac-aarch64</javafx.platform>
+            </properties>
+        </profile>
+
         <!-- macOS Intel -->
         <profile>
             <id>mac-x64</id>
@@ -223,13 +247,27 @@
             </properties>
         </profile>
 
-        <!-- Linux 64-bit -->
+        <!-- Linux 64-bit (x86_64) -->
         <profile>
-            <id>linux-x64</id>
+            <id>linux-x86_64</id>
             <activation>
                 <os>
                     <name>Linux</name>
                     <arch>x86_64</arch>
+                </os>
+            </activation>
+            <properties>
+                <javafx.platform>linux</javafx.platform>
+            </properties>
+        </profile>
+
+        <!-- Linux 64-bit (amd64, common on CI like GitHub Actions) -->
+        <profile>
+            <id>linux-amd64</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                    <arch>amd64</arch>
                 </os>
             </activation>
             <properties>
