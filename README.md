@@ -47,6 +47,11 @@ jpackage --verbose --name mcalert --input quarkus-app \
     --main-jar quarkus-run.jar 
 ```
 
+A less secure alternative is to download a build from the `mac` branch on github:
+https://github.com/nostra/mcalert/actions/workflows/mac-relase.yaml
+In this case, you would need to do:
+`System Settings` → `Privacy & Security` → “App was blocked…” → `Open Anyway`
+
 ## Configure
 
 Create a file in your home directory named `$HOME/.mcalert.properties` and
@@ -129,8 +134,7 @@ Dev mode configuration in [application.properties](src%2Fmain%2Fresources%2Fappl
 expects a port-forward proxy to Prometheus similar to:
 ```
 kubectl port-forward -n monitoring svc/prometheus-k8s 9090
- ```
-
+```
 
 ## Details
 
