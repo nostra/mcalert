@@ -41,7 +41,7 @@ public class StatusWindow extends Application {
 
         Platform.setImplicitExit(false);
         primaryStage.setTitle("Firing alerts");
-        primaryStage.setOnCloseRequest(event -> {
+        primaryStage.setOnCloseRequest(_ -> {
             blockForStart.release();
             if ( noTray ) {
                 Quarkus.asyncExit();
@@ -76,25 +76,15 @@ public class StatusWindow extends Application {
             Tab tab = createEndpointTab(endpointName, poller);
             tabPane.getTabs().add(tab);
         });
-
         Scene scene = new Scene(tabPane, 300, 250);
 
-        // Bind TabPane dimensions to Scene for proper resizing
-        tabPane.prefWidthProperty().bind(scene.widthProperty());
-        tabPane.prefHeightProperty().bind(scene.heightProperty());
-
         primaryStage.setScene(scene);
-        primaryStage.sizeToScene();
         primaryStage.show();
     }
 
     private TabPane createTabPane() {
         TabPane tabPane = new TabPane();
-        // Configure TabPane to fill available space
-        tabPane.setPrefWidth(Double.MAX_VALUE);
-        tabPane.setPrefHeight(Double.MAX_VALUE);
-        tabPane.setMaxWidth(Double.MAX_VALUE);
-        tabPane.setMaxHeight(Double.MAX_VALUE);
+        tabPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         return tabPane;
     }
 

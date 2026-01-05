@@ -6,11 +6,9 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Tab;
-import javafx.scene.layout.VBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +66,7 @@ public class MaclertTab extends Tab {
             }
 
             private void setupCheckBoxListener(CheckBox checkBox, Item item) {
-                checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                checkBox.selectedProperty().addListener((_, _, newVal) -> {
                     item.setSeenSecondsAgo(0);
                     if (sep.toggleIgnoreOn(item.getName())) {
                         item.setSelected(newVal);
@@ -111,12 +109,7 @@ public class MaclertTab extends Tab {
 
         // Create and configure the list view with the items
         ListView<Item> listView = createListView(poller, items.sorted());
-
-        // Set up the tab content
-        VBox vbox = new VBox();
-        vbox.getChildren().add(new Label("Checked alerts are ignored:"));
-        vbox.getChildren().add(listView);
-        Platform.runLater(() -> setContent(vbox));
+        Platform.runLater(() -> setContent(listView));
     }
 
     public void updateMarker(boolean success) {
