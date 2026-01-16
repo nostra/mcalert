@@ -38,7 +38,7 @@ extension.
 # Create a Mac DMG image
 
 ```shell
-./mvnw -B clean package
+./mvnw -B -Dmaven.build.cache.enabled=false clean package
 cd target
 jpackage --verbose --name mcalert --input quarkus-app \
     --description "Read Prometheus endpoints and show status as toolbar icon" \
