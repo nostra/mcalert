@@ -1,5 +1,6 @@
 package io.github.nostra.mcalert.tray;
 
+import module java.desktop;
 import io.github.nostra.mcalert.StatusWindow;
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.client.EndpointCallEnum;
@@ -13,14 +14,6 @@ import javafx.application.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageFilter;
-import java.awt.image.RGBImageFilter;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;

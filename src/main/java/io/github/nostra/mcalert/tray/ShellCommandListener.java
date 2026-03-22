@@ -1,5 +1,6 @@
 package io.github.nostra.mcalert.tray;
 
+import module java.base;
 import io.github.nostra.mcalert.client.AlertResource;
 import io.github.nostra.mcalert.client.EndpointCallEnum;
 import io.github.nostra.mcalert.config.AlertEndpointConfig;
@@ -13,13 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Dependent
 public class ShellCommandListener implements PropertyChangeListener {
