@@ -1,0 +1,24 @@
+endpoints:
+  mock:
+    # Prometheus config
+    # %dev.mcalert.prometheus.endpoints.localhost.uri=http://localhost:9090/api/v1/alerts
+    # %dev.mcalert.prometheus.endpoints.localhost.ignore-alerts=CPUThrottlingHigh,KubeControllerManagerDown,KubeSchedulerDown,NodeClockNotSynchronising
+    uri: http://localhost:9090/prometheus-data1.json
+    ignore-alerts:
+      - KubeControllerManagerDown
+      - KubeSchedulerDown
+      - NodeClockNotSynchronising
+      - NotPresent
+    watchdog-alerts:
+      - disabled
+  duplicate:
+    # Duplicate to test multiple source
+    uri: http://localhost:9090/prometheus-data1.json
+    ignore-alerts:
+      - CPUThrottlingHigh
+      - KubeControllerManagerDown
+      - NodeClockNotSynchronising
+    watchdog-alerts:
+      - KubeSchedulerDown
+command-line:
+  shell-command: /Users/en/git/private/mcalert/notify.sh

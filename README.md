@@ -54,6 +54,12 @@ In this case, you would need to do:
 
 ## Configure
 
+
+### Migration from old format
+
+     cat application.properties|yq eval -p=props -o=yaml > mcalert.yaml
+
+### Legacy doc
 Create a file in your home directory named `$HOME/.mcalert.properties` and
 configure endpoints. Examples can be found in the 
 [application.properties](src%2Fmain%2Fresources%2Fapplication.properties)
