@@ -59,6 +59,8 @@ In this case, you would need to do:
 
      cat application.properties|yq eval -p=props -o=yaml > mcalert.yaml
 
+Manually translate comma-separated lists into proper lists.
+
 ### Legacy doc
 Create a file in your home directory named `$HOME/.mcalert.properties` and
 configure endpoints. Examples can be found in the 
