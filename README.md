@@ -54,6 +54,37 @@ In this case, you would need to do:
 
 ## Configure
 
+
+### Migration from old format
+
+     cat application.properties|yq eval -p=props -o=yaml > mcalert.yaml
+
+Manually translate comma-separated lists into proper lists.
+
+### Configuration example
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nostra/mcalert/refs/heads/main/mcalert-schema.json
+endpoints:
+  mock:  # (1)
+    uri: http://localhost:9090/prometheus-data1.json (2)
+    ignore-alerts:
+      - KubeControllerManagerDown
+      - KubeSchedulerDown
+      - NodeClockNotSynchronising
+      - NotPresent
+    watchdog-alerts:
+      - disabled
+command-line: # (3)
+  shell-command: /path/to/this/git/repo/notify.sh
+```
+
+- (1): Name of endpoint. You can have as many as you like
+- (2): Where to read the data, which can be either a Prometheus resource, or a Grafana datasource, in which case you need to indicate the datasource name
+- (3): A shell script which will be triggered for each alert, examine `notify.sh` for example
+
+Use the JSON schema to get documentation of the other fields.
+
+### Legacy doc
 Create a file in your home directory named `$HOME/.mcalert.properties` and
 configure endpoints. Examples can be found in the 
 [application.properties](src%2Fmain%2Fresources%2Fapplication.properties)

@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "mcalert configuration",
+  "type": "object",
+  "properties": {
+    "endpoints": {
+      "type": "object",
+      "description": "Configuration of Prometheus or Grafana endpoints to check for alerts.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URI to the Prometheus alerts API or Grafana datasources API.",
+            "examples": [
+              "http://localhost:9090/api/v1/alerts",
+              "https://grafana.example.com/api/datasources/proxy/1/api/v1/alerts",
+              "https://grafana.example.com/api/datasources"
+            ]
+          },
+          "datasource": {
+            "type": "string",
+            "description": "If the URI is a Grafana proxy, this is the name of the Prometheus datasource to use, otherwise leave empty.",
+            "examples": [
+              "Prometheus"
+            ]
+          },
+          "header": {
+            "type": "array",
+            "description": "Optional HTTP headers to send with the request (e.g., for Authorization).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the HTTP header.",
+                  "examples": [
+                    "Authorization"
+                  ]
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The content/value of the HTTP header.",
+                  "examples": [
+                    "Bearer <token>"
+                  ]
+                }
+              },
+              "required": ["name", "content"]
+            }
+          },
+          "ignore-alerts": {
+            "type": "array",
+            "description": "List of alert names to ignore for this endpoint.",
+            "items": {
+              "type": "string"
+            },
+            "examples": [
+              [
+                "CPUThrottlingHigh",
+                "KubeControllerManagerDown"
+              ]
+            ]
+          },
+          "watchdog-alerts": {
+            "type": "array",
+            "description": "List of alerts that are expected to be always firing (watchdogs). If they stop firing, it's considered an error. Watchdog can be disabled with the string \"disabled\".",
+            "items": {
+              "type": "string"
+            },
+            "examples": [
+              [
+                "Watchdog"
+              ]
+            ]
+          }
+        },
+        "required": ["uri"]
+      }
+    },
+    "command-line": {
+      "type": "object",
+      "description": "Configuration for executing a shell command when alert status changes.",
+      "properties": {
+        "shell-command": {
+          "type": "string",
+          "description": "The full path to the shell script or command to execute.",
+          "examples": [
+            "/usr/local/bin/notify.sh"
+          ]
+        }
+      },
+      "required": ["shell-command"]
+    },
+    "darkmode": {
+      "type": "boolean",
+      "description": "Manually set the desired mode (true for dark mode). If not set, the application tries to detect it automatically."
+    }
+  },
+  "required": ["endpoints"]
+}
