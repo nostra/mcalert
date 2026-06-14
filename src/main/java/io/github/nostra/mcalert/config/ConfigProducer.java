@@ -50,6 +50,5 @@ public class ConfigProducer {
         if (oldCfg.exists()) {
             throw new McConfigurationException("Found " + oldCfg.getAbsolutePath() + ". Please remove it and configure mcalert.yaml");
         }
-        logger.info("\n\n\nOLD CONFIG DOES NOT EXIST - {} ", oldCfg.getAbsolutePath());
     }
 }

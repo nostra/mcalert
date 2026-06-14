@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../mcalert-schema.json
 endpoints:
   mock:
     # Prometheus config
