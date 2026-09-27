@@ -115,19 +115,25 @@ public class ShellCommandListener implements PropertyChangeListener {
         processExec(cmd);
     }
 
+    @SuppressWarnings("BlockingMethodInNonBlockingContext")
     private static void processExec(String[] cmd) {
         if ( !new File(cmd[0]).canExecute() ){
             logger.error("Cannot find file to execute: {}", cmd[0]);
             return;
         }
+        Process process = null;
         try {
-            Process process = Runtime.getRuntime().exec(cmd);
+            process = Runtime.getRuntime().exec(cmd);
             process.waitFor();
         } catch ( InterruptedException e) {
             logger.error("Got unexpectedly interrupted", e);
             Thread.currentThread().interrupt();
         } catch (IOException e) {
             logger.error("Unexpected exception calling command {}", List.of(cmd), e);
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
         }
     }
 }

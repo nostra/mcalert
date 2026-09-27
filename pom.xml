@@ -14,20 +14,21 @@ older 4.0.0 version temporarily. Annoying, but that is how it is as of Jan 2026.
     <artifactId>mcalert</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <properties>
-        <compiler-plugin.version>3.15.0</compiler-plugin.version>
+        <compiler-plugin.version>3.16.0</compiler-plugin.version>
         <!-- Commented out to be able to do mvnw quarkus:dev -->
         <!--        <compiler-plugin.version>4.0.0-beta-3</compiler-plugin.version>-->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.37.2</quarkus.platform.version>
+        <quarkus.platform.version>3.39.5</quarkus.platform.version>
         <skipITs>true</skipITs>
-        <surefire-plugin.version>3.5.6</surefire-plugin.version>
+        <surefire-plugin.version>3.6.0</surefire-plugin.version>
         <maven.compiler.release>25</maven.compiler.release>
         <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
-        <javafx-controls.version>26.0.1</javafx-controls.version>
+        <javafx-controls.version>26.0.1</javafx-controls.version><!-- 27 is the newest -->
         <javafx.platform>this shall be automatically set by profile</javafx.platform>
+        <semispace-main.version>2.0.0</semispace-main.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -37,6 +38,12 @@ older 4.0.0 version temporarily. Annoying, but that is how it is as of Jan 2026.
                 <version>${quarkus.platform.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.semispace</groupId>
+                <artifactId>semispace-main</artifactId>
+                <version>${semispace-main.version}</version>
             </dependency>
 
             <dependency>
@@ -63,6 +70,11 @@ older 4.0.0 version temporarily. Annoying, but that is how it is as of Jan 2026.
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>org.semispace</groupId>
+            <artifactId>semispace-main</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
