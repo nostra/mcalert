@@ -13,32 +13,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import static java.util.Objects.requireNonNull;
 
 public class MaclertTab extends Tab {
     private static final Logger logger = LoggerFactory.getLogger(MaclertTab.class);
 
     public MaclertTab(String endpointName) {
-        super(endpointName);
+        super(requireNonNull(endpointName, "endpointName"));
     }
 
-    protected ObservableList<Item> createItemsFromAlerts(SingleEndpointPoller poller) {
-        ObservableList<Item> items = FXCollections.observableArrayList();
-
-        poller.firingAlerts().forEach(alert -> {
-            boolean isIgnored = poller.ignoredAlerts().contains(alert.name());
-
-            // Calculate how long since the alert was last seen
-            long seenSecondsAgo = (alert.lastSeen() == null)
-                    ? 50_000  // Default high value if never seen
-                    : Instant.now().getEpochSecond() - alert.lastSeen().getEpochSecond();
-
-            items.add(new Item(alert.name(), isIgnored, seenSecondsAgo));
-        });
-
-        return items;
+    private static ObservableList<Item> createItemsFromAlerts(SingleEndpointPoller poller) {
+        return FXCollections.observableArrayList(
+            poller.firingAlerts().stream()
+                .map(alert -> {
+                    boolean isIgnored = poller.ignoredAlerts().contains(alert.name());
+                    long seenSecondsAgo = alert.lastSeen() == null
+                        ? 50_000L
+                        : Instant.now().getEpochSecond() - alert.lastSeen().getEpochSecond();
+                    return new Item(alert.name(), isIgnored, seenSecondsAgo);
+                })
+                .toList()
+        );
     }
 
-    protected ListView<Item> createListView(SingleEndpointPoller sep, ObservableList<Item> items) {
+    private ListView<Item> createListView(SingleEndpointPoller sep, ObservableList<Item> items) {
         ListView<Item> listView = new ListView<>(items);
         listView.setCellFactory(_ -> new ListCell<>() {
             @Override
@@ -57,7 +55,7 @@ public class MaclertTab extends Tab {
             }
 
             private CheckBox createCheckBox(Item item) {
-                CheckBox checkBox = new CheckBox(item.getName());
+                var checkBox = new CheckBox(item.getName());
                 checkBox.setSelected(item.isSelected());
                 if (sep.isWatchDogAlert(item.getName())) {
                     checkBox.setDisable(true);
@@ -75,7 +73,7 @@ public class MaclertTab extends Tab {
             }
 
             private void applyAgeBasedStyle(CheckBox checkBox, Item item) {
-                if (item.getSeenSecondsAgo() > 40_000) {
+                if (item.getSeenSecondsAgo() > 40_000L) {
                     checkBox.setStyle("""
                             -fx-background-color: rgb(255, 204, 203);
                             -fx-strikethrough: true;
